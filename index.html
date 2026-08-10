@@ -3,16 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advanced Corporate Finance 2026 — week by week</title>
+<title>Explorers — Advanced Corporate Finance (EBM232A05)</title>
 <!--
   Advanced Corporate Finance (EBM232A05) — University of Groningen
-  Colleague preview of the 2026 rebuild: one card per week, each linking
-  the lecture deck (PDF), the tutorial deck (PDF), and the week's
-  interactive Explorer (self-contained HTML).
+  Entry point for the week-by-week Explorers.
 
-  Palette and type mirror the Explorers and the Beamer decks
-  (RUG red #C1002A, Fira Sans), so the set reads as one course.
-  No external CSS/JS/fonts — everything on this site is self-contained.
+  Self-contained, like the Explorers themselves: no external CSS, JS,
+  fonts or images. Links are RELATIVE, so the whole `interactive/`
+  folder can be dropped onto GitHub Pages, served from a file:// path,
+  or zipped into Brightspace as one topic and the links still resolve.
+
+  Palette and type deliberately mirror the Explorers and the Beamer
+  decks (RUG red #C1002A, Fira Sans), so the set reads as one course.
+
+  TO ADD A WEEK: copy one <li class="card"> block, change the href,
+  week number, title, one-line thesis, and the "what moves" clause.
+  Weeks with no Explorer yet are listed as .pending so the gaps in the
+  course are visible rather than silently absent.
 -->
 <style>
   :root{
@@ -29,187 +36,139 @@
   body{margin:0;padding:24px 16px 48px;background:var(--bg);color:var(--ink);
        font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
        line-height:1.5;font-size:16px}
-  .wrap{max-width:1060px;margin:0 auto}
+  .wrap{max-width:980px;margin:0 auto}
   header{border-bottom:2px solid var(--rugred);padding-bottom:12px;margin-bottom:18px}
   .kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;
           color:var(--rugred);font-weight:600}
   h1{font-size:30px;line-height:1.2;margin:6px 0 8px;font-weight:650}
-  .lede{color:var(--muted);max-width:72ch;margin:0}
+  .lede{color:var(--muted);max-width:64ch;margin:0}
   .note{background:var(--panel);border-left:3px solid var(--rugblue);
-        padding:12px 14px;margin:22px 0 22px;border-radius:0 4px 4px 0;
-        font-size:15px;color:var(--muted);max-width:78ch}
+        padding:12px 14px;margin:22px 0 26px;border-radius:0 4px 4px 0;
+        font-size:15px;color:var(--muted);max-width:70ch}
   .note strong{color:var(--ink)}
-  .feature{border:1px solid var(--rugred);border-radius:6px;background:var(--panel);
-           padding:16px 18px;margin:0 0 26px}
-  .feature h2{font-size:19px;margin:2px 0 6px;font-weight:650}
-  .feature p{margin:0 0 10px;font-size:15px;color:var(--muted);max-width:88ch}
-  .feature .btn{border-color:var(--rugred);color:var(--rugred);font-weight:600}
-  ul.weeks{list-style:none;padding:0;margin:0;display:grid;gap:14px;
-           grid-template-columns:repeat(auto-fill,minmax(440px,1fr))}
-  @media (max-width:520px){ ul.weeks{grid-template-columns:1fr} }
-  .week{border:1px solid var(--line);border-radius:6px;background:var(--panel);
-        padding:16px 18px;border-left:4px solid var(--rugred)}
+  ul.cards{list-style:none;padding:0;margin:0;display:grid;gap:14px;
+           grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .card{border:1px solid var(--line);border-radius:6px;background:var(--panel);
+        overflow:hidden}
+  .card a{display:block;padding:16px 18px;text-decoration:none;color:inherit;
+          height:100%;border-left:4px solid var(--rugred)}
+  .card a:hover,.card a:focus{background:var(--bg);outline:none}
+  .card a:focus-visible{box-shadow:inset 0 0 0 2px var(--rugblue)}
   .wk{font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-      color:var(--rugred);font-weight:600;display:flex;gap:8px;align-items:center;
-      flex-wrap:wrap}
-  .moment{display:inline-block;border:1px solid var(--rugblue);color:var(--rugblue);
-          border-radius:3px;padding:0 6px;font-size:11px;letter-spacing:.05em;
-          font-weight:600;text-transform:uppercase}
-  .week h2{font-size:18px;margin:4px 0 6px;font-weight:600;line-height:1.3}
-  .week p.thesis{margin:0 0 10px;font-size:14.5px;color:var(--muted)}
-  .links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
-  .btn{display:inline-block;border:1px solid var(--line);border-radius:4px;
-       padding:4px 10px;font-size:13.5px;text-decoration:none;color:var(--ink);
-       background:var(--bg)}
-  .btn:hover,.btn:focus{border-color:var(--rugblue);color:var(--rugblue);outline:none}
-  .btn.exp{border-color:var(--rugblue);color:var(--rugblue);font-weight:600}
-  .btn.exp:hover,.btn.exp:focus{background:var(--rugblue);color:var(--bg)}
-  .due{font-size:13px;color:var(--ink);opacity:.8;margin:0}
-  .due b{font-weight:600;color:var(--rugblue)}
-  .break{border-left-color:var(--line);opacity:.65}
-  .break .wk{color:var(--muted)}
+      color:var(--rugred);font-weight:600}
+  .card h2{font-size:18px;margin:4px 0 6px;font-weight:600;line-height:1.3}
+  .card p{margin:0 0 8px;font-size:14.5px;color:var(--muted)}
+  .moves{font-size:13px;color:var(--ink);opacity:.85}
+  .moves b{font-weight:600;color:var(--rugblue)}
+  .pending{opacity:.55}
+  .pending .inner{display:block;padding:16px 18px;border-left:4px solid var(--line)}
+  .pending .wk{color:var(--muted)}
   footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
-         font-size:13.5px;color:var(--muted);max-width:80ch}
+         font-size:13.5px;color:var(--muted);max-width:72ch}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <div class="kicker">Advanced Corporate Finance · EBM232A05 · MSc Finance · University of Groningen</div>
-  <h1>The 2026 course, week by week</h1>
-  <p class="lede">A complete rebuild: Modigliani&ndash;Miller is the frictionless benchmark, and each week
-  identifies one market friction, develops a compact model of it, and confronts the theory with the
-  empirical evidence. Every week ships a lecture deck, a tutorial deck, and a hands-on Explorer.</p>
+  <div class="kicker">Advanced Corporate Finance · EBM232A05 · MSc Finance</div>
+  <h1>Explorers</h1>
+  <p class="lede">One per week, each a companion to that week&rsquo;s lecture. Move a slider,
+  watch the answer move &mdash; that is comparative statics, and it is the whole method.</p>
 </header>
 
 <div class="note">
-  <strong>A preview for colleagues</strong> &mdash; not the student-facing site (the student release runs
-  through Brightspace from week 36). Everything here is self-contained: the PDFs open in the browser, and
-  each Explorer is a single HTML file &mdash; move a slider, watch the answer move; that is the week&rsquo;s
-  comparative statics, felt rather than tabulated.
+  <strong>Ungraded.</strong> Nothing here is handed in and none of it is examined directly.
+  These exist so the mechanism becomes something you have <em>felt</em> rather than
+  memorised. The exam asks you to do the same arithmetic by hand.
 </div>
 
-<div class="feature">
-  <h2>The assignment, updated</h2>
-  <p>The multi-week replication project: teams of five reproduce the headline result of a published
-  empirical corporate-finance paper from raw WRDS data, with AI use <em>required, documented, audited and
-  graded</em>. Assessed at four moments (weeks 39, 41, 42, 43). For 2026&ndash;27 the weights move to
-  <strong>80% supervised exam / 20% project</strong> &mdash; the redesign, and the reasoning behind it, in full:</p>
-  <div class="links">
-    <a class="btn" href="assignment.html">The redesign, explained</a>
-    <a class="btn" href="slides/tutorial-replication-project.pdf">Project tutorial deck (PDF)</a>
-  </div>
-</div>
+<ul class="cards">
 
-<ul class="weeks">
-
-  <li class="week">
-    <div class="wk">Week 36</div>
-    <h2>Frictions &amp; the MM benchmark</h2>
-    <p class="thesis">MM as the null &mdash; and how little the textbook frictions explain. The Aha:
-    Miller&rsquo;s personal-tax clawback. The tax gain to debt is not
-    <span style="white-space:nowrap">&tau;<sub>c</sub>D</span>, and its sign can flip.</p>
-    <div class="links">
-      <a class="btn" href="slides/L36-frictions-mm-benchmark.pdf">Lecture deck</a>
-      <a class="btn" href="slides/tutorial-replication-project.pdf">Tutorial: project kickoff</a>
-      <a class="btn exp" href="explorers/L36-miller-clawback-explorer.html">Explorer: Miller&rsquo;s clawback</a>
-    </div>
-    <p class="due">Deliverable: team enrolment + paper ranking.</p>
+  <li class="card">
+    <a href="L36-miller-clawback-explorer.html">
+      <div class="wk">Week 36</div>
+      <h2>Miller&rsquo;s clawback</h2>
+      <p>The tax gain to debt is not <span style="white-space:nowrap">&tau;<sub>c</sub>D</span>.
+      Personal taxes claw it back, and the sign can flip.</p>
+      <div class="moves"><b>Watch:</b> the gain go negative, and Miller&rsquo;s
+      equilibrium where it is exactly zero.</div>
+    </a>
   </li>
 
-  <li class="week">
-    <div class="wk">Week 37</div>
-    <h2>Capital structure: dynamics &amp; flexibility</h2>
-    <p class="thesis">Borrowing today spends an option on borrowing tomorrow &mdash; lever up only if the
-    tax shield beats the option you burn. Optimal under-leverage, derived.</p>
-    <div class="links">
-      <a class="btn" href="slides/L37-capital-structure-dynamics.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T37-wrds-onboarding.pdf">Tutorial: WRDS onboarding</a>
-      <a class="btn exp" href="explorers/L37-debt-capacity-explorer.html">Explorer: debt capacity</a>
-    </div>
-    <p class="due">Papers + team-specific parameter sheets allocated.</p>
+  <li class="card">
+    <a href="L37-debt-capacity-explorer.html">
+      <div class="wk">Week 37</div>
+      <h2>Debt capacity as a real option</h2>
+      <p>Borrowing today spends an option on borrowing tomorrow. Lever up only if
+      the tax shield beats the option you burn.</p>
+      <div class="moves"><b>Watch:</b> optimal under-leverage appear when
+      <span style="white-space:nowrap">pG &gt; &tau;I</span>.</div>
+    </a>
   </li>
 
-  <li class="week">
-    <div class="wk">Week 38</div>
-    <h2>External finance &amp; the macro link</h2>
-    <p class="thesis">A collateral limit turns a firm&rsquo;s own net worth into a multiplier on what it can
-    invest &mdash; and the micro friction aggregates into the macro accelerator.</p>
-    <div class="links">
-      <a class="btn" href="slides/L38-external-finance-macro.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T38-panel-regression.pdf">Tutorial: panel &amp; regression</a>
-      <a class="btn exp" href="explorers/L38-net-worth-multiplier-explorer.html">Explorer: the multiplier</a>
-    </div>
-    <p class="due">Scoping memo due <b>22:00 Tue</b>.</p>
+  <li class="card">
+    <a href="L38-net-worth-multiplier-explorer.html">
+      <div class="wk">Week 38</div>
+      <h2>Net worth as a multiplier</h2>
+      <p>A collateral limit turns a firm&rsquo;s own net worth into a multiplier on what
+      it can invest &mdash; and aggregates into the macro accelerator.</p>
+      <div class="moves"><b>Watch:</b> the sensitivity jump from
+      <span style="white-space:nowrap">1+&lambda;</span> to exactly zero. That step
+      <em>is</em> Kaplan&ndash;Zingales&rsquo;s objection.</div>
+    </a>
   </li>
 
-  <li class="week">
-    <div class="wk">Week 39 <span class="moment">M1 · scoping · 10 pts</span></div>
-    <h2>Incentives &amp; compensation &mdash; the manager wedge</h2>
-    <p class="thesis">Pay a manager more equity and he becomes <em>more</em> cautious. Convex pay buys the
-    appetite back &mdash; then overshoots.</p>
-    <div class="links">
-      <a class="btn" href="slides/L39-incentives-compensation.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T39-m1-and-manager-wedge.pdf">Tutorial: M1 + wedge drill</a>
-      <a class="btn exp" href="explorers/L39-manager-wedge-explorer.html">Explorer: the manager wedge</a>
-    </div>
-    <p class="due">M1 assessed &amp; returned &mdash; the proceed / no-proceed gate. Mock exam posted.</p>
+  <li class="card">
+    <a href="L39-manager-wedge-explorer.html">
+      <div class="wk">Week 39</div>
+      <h2>The manager wedge</h2>
+      <p>Pay a manager more equity and he becomes <em>more</em> cautious. Convex pay
+      buys the appetite back, then overshoots.</p>
+      <div class="moves"><b>Watch:</b> his appetite peak and turn &mdash; the derivative
+      crosses zero right where the lecture case sits.</div>
+    </a>
   </li>
 
-  <li class="week break">
-    <div class="wk">Week 40</div>
-    <h2>Career Week</h2>
-    <p class="thesis">No lecture, no tutorial. The mock exam is open for an optional attempt.</p>
+  <li class="card">
+    <a href="L41-free-rider-explorer.html">
+      <div class="wk">Week 41</div>
+      <h2>The free-rider on control</h2>
+      <p>A raider who is the only bidder on earth still earns nothing, because the
+      target&rsquo;s own shareholders compete the surplus away.</p>
+      <div class="moves"><b>Watch:</b> the stake he must already own before bidding
+      pays &mdash; then push the charter until it starts paying raiders who
+      <em>destroy</em> value.</div>
+    </a>
   </li>
 
-  <li class="week">
-    <div class="wk">Week 41 <span class="moment">M2 · reproduction · 25 pts</span></div>
-    <h2>The market for corporate control</h2>
-    <p class="thesis">A raider who is the only bidder on earth still earns nothing &mdash; the target&rsquo;s
-    own shareholders free-ride the surplus away. So good takeovers are underprovided, and restoring them
-    overshoots.</p>
-    <div class="links">
-      <a class="btn" href="slides/L41-market-for-corporate-control.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T41-event-study-m2.pdf">Tutorial: event studies + M2</a>
-      <a class="btn exp" href="explorers/L41-free-rider-explorer.html">Explorer: the free-rider</a>
-    </div>
-    <p class="due">M2 assessed &amp; returned &mdash; target cells vs the paper&rsquo;s printed values.</p>
+  <li class="card">
+    <a href="L42-deposit-insurance-explorer.html">
+      <div class="wk">Week 42</div>
+      <h2>The put the taxpayer wrote</h2>
+      <p>Insure the depositors and the bank stops caring how bad the bad state gets
+      &mdash; so it pays to make it worse. Capital is the deductible.</p>
+      <div class="moves"><b>Watch:</b> the flat premium change sign &mdash; the safe,
+      well-capitalised bank ends up funding the reckless one.</div>
+    </a>
   </li>
 
-  <li class="week">
-    <div class="wk">Week 42 <span class="moment">M3 · final package · 55 pts</span></div>
-    <h2>Risk management &amp; financial regulation</h2>
-    <p class="thesis">What is a euro in the bad state worth? To a constrained firm, more than one &mdash; so
-    it hedges itself. To an insured bank, nothing &mdash; so it has to be made to. Capital is the deductible.</p>
-    <div class="links">
-      <a class="btn" href="slides/L42-risk-management-regulation.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T42-pset-m3-checklist.pdf">Tutorial: M3 checklist</a>
-      <a class="btn exp" href="explorers/L42-deposit-insurance-explorer.html">Explorer: the taxpayer&rsquo;s put</a>
-    </div>
-    <p class="due">M3 due end of week &mdash; reproducible repo, AI-process dossier, extension.</p>
-  </li>
-
-  <li class="week">
-    <div class="wk">Week 43 <span class="moment">M4 · defence · 10 pts</span></div>
-    <h2>Payout policy: smoothing as commitment</h2>
-    <p class="thesis">The manager&rsquo;s stake is collateral he never had to post &mdash; and a dividend is
-    what happens when that stake reaches its ceiling. Smoothing as commitment, derived not assumed.</p>
-    <div class="links">
-      <a class="btn" href="slides/L43-payout-dynamic.pdf">Lecture deck</a>
-      <a class="btn" href="slides/T43-defence-day.pdf">Tutorial: defence day</a>
-      <a class="btn exp" href="explorers/L43-inside-equity-explorer.html">Explorer: the manager&rsquo;s stake</a>
-    </div>
-    <p class="due">M4 &mdash; individual reflection + in-tutorial code defence.</p>
+  <li class="card">
+    <a href="L43-inside-equity-explorer.html">
+      <div class="wk">Week 43</div>
+      <h2>The manager&rsquo;s stake</h2>
+      <p>He never posted it &mdash; he earned it. And a dividend is simply what happens
+      when that stake finally reaches its ceiling.</p>
+      <div class="moves"><b>Watch:</b> start a firm low enough and the median firm
+      never pays a dividend at all &mdash; it is liquidated first.</div>
+    </a>
   </li>
 
 </ul>
 
 <footer>
-  Block 1a 2026&ndash;27, weeks 36&ndash;43 · lecture Tue + tutorial Wed · Sebastian Pfeil, University of
-  Groningen. Valuation is deliberately out of scope (covered in the separate Corporate Valuation block);
-  formal contract theory is handed to Theoretical Corporate Finance, governance institutions to Corporate
-  Governance.
+  Week 40 is the teaching break. Each Explorer is a single self-contained file &mdash;
+  no network, no tracking, nothing to install &mdash; so it runs offline once loaded.
 </footer>
 
 </div>
