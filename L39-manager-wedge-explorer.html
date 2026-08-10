@@ -47,8 +47,18 @@
   .sub{color:var(--muted);font-size:14px}
   .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
         border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  .grid{display:grid;grid-template-columns:5fr 6fr;gap:22px;align-items:start}
+  .figcol{align-self:stretch;min-width:0}
+  .figstick{position:sticky;top:12px}
+  .figcol figure{margin:0}
+  .ctrlcol .verdict{margin-top:14px}
+  @media (max-width:820px){
+    .grid{grid-template-columns:1fr}
+    .figcol{order:-1}
+    .figstick{position:static}
+    .row{margin-bottom:9px}
+    fieldset{padding:10px 12px 4px}
+  }
   fieldset{border:1px solid var(--line);border-radius:8px;padding:14px 16px 6px;margin:0}
   legend{font-size:12.5px;font-weight:600;color:var(--muted);padding:0 6px;text-transform:uppercase;letter-spacing:.03em}
   .row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:6px 10px;margin-bottom:13px}
@@ -127,6 +137,7 @@
 <h2 class="sr-only">Interactive explorer: adjust the manager's stake, the project's NPV and added variance, his risk aversion and his option vega, to see whether he accepts or refuses a project the shareholders want, together with the partial derivatives of his certainty equivalent and the empirical estimates that measure them.</h2>
 
 <div class="grid">
+  <div class="ctrlcol">
   <fieldset>
     <legend>Parameters</legend>
     <div class="row">
@@ -164,8 +175,6 @@
       <button data-preset="over">the overshoot</button>
     </div>
   </fieldset>
-
-  <div>
     <div class="verdict">
       <div class="cmp">
         <span id="c_ce">CE = +0.50</span>
@@ -178,17 +187,10 @@
         <span id="v_note"></span>
       </div>
     </div>
-    <div class="qs">
-      <h2>Try to answer</h2>
-      <ol>
-        <li>From the lecture case, drag <b>β</b> right. His appetite <em>falls</em>. What is the board buying with that extra equity, and who pays for it?</li>
-        <li>With <b>ν = 0</b>, raise <b>Δσ²</b> — he gets worse off. Now set <b>ν = 0.030</b> and raise it again. What changed, and why is that the point of paying in options?</li>
-        <li>Set <b>G</b> negative and raise <b>ν</b> until he accepts. Who pays for <em>that</em> project?</li>
-      </ol>
-    </div>
   </div>
-</div>
 
+  <div class="figcol">
+  <div class="figstick">
 <figure>
   <svg id="plot" viewBox="0 0 940 320" role="img" aria-labelledby="plotTitle plotDesc">
     <title id="plotTitle">The manager's certainty equivalent against his stake</title>
@@ -196,6 +198,19 @@
   </svg>
   <figcaption id="cap"></figcaption>
 </figure>
+  <div class="ticker" id="tick">Move any slider to see what it does.</div>
+  </div>
+  </div>
+</div>
+
+<div class="qs">
+  <h2>Try to answer</h2>
+  <ol>
+    <li>From the lecture case, drag <b>β</b> right. His appetite <em>falls</em>. What is the board buying with that extra equity, and who pays for it?</li>
+    <li>With <b>ν = 0</b>, raise <b>Δσ²</b> — he gets worse off. Now set <b>ν = 0.030</b> and raise it again. What changed, and why is that the point of paying in options?</li>
+    <li>Set <b>G</b> negative and raise <b>ν</b> until he accepts. Who pays for <em>that</em> project?</li>
+  </ol>
+</div>
 
 <section class="cs">
   <h2>Two movements carry this lecture</h2>
@@ -218,7 +233,6 @@
     </div>
   </div>
 
-  <div class="ticker" id="tick">Move any slider to see what it does.</div>
 </section>
 
 <footer>

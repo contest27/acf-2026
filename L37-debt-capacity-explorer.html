@@ -35,8 +35,18 @@
   .sub{color:var(--muted);font-size:14px}
   .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
         border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .grid{display:grid;grid-template-columns:5fr 6fr;gap:22px;align-items:start}
+  .figcol{align-self:stretch;min-width:0}
+  .figstick{position:sticky;top:12px}
+  .figcol figure{margin:0}
+  .ctrlcol .verdict{margin-top:14px}
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr}
+    .figcol{order:-1}
+    .figstick{position:static}
+    .row{margin-bottom:9px}
+    fieldset{padding:10px 12px 4px}
+  }
   fieldset{border:1px solid var(--line);border-radius:8px;padding:14px 16px 6px;margin:0}
   legend{font-size:12.5px;font-weight:600;color:var(--muted);padding:0 6px;text-transform:uppercase;letter-spacing:.03em}
   .row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:6px 10px;margin-bottom:14px}
@@ -94,6 +104,7 @@
 <h2 class="sr-only">Interactive explorer: adjust the net tax shield, debt capacity, investment size, arrival probability and project NPV to see whether the firm levers to capacity or preserves debt capacity, with the resulting firm value and a plot of value against today's debt.</h2>
 
 <div class="grid">
+  <div class="ctrlcol">
   <fieldset>
     <legend>Parameters</legend>
     <div class="row">
@@ -128,8 +139,6 @@
       <button data-preset="cashcow">mature cash cow</button>
     </div>
   </fieldset>
-
-  <div>
     <div class="verdict">
       <div class="cmp">
         <span id="c_shield">τI = 12.0</span> &nbsp;<span id="c_rel">&lt;</span>&nbsp; <span id="c_opt">pG = 12.5</span>
@@ -140,18 +149,10 @@
         firm value <b id="v_val">20.5</b> &nbsp;<span id="v_note"></span>
       </div>
     </div>
-    <div class="qs">
-      <h2>Try to answer</h2>
-      <ol>
-        <li>Raise <b>p</b>. Why does more likely future need push leverage <em>down</em>?</li>
-        <li>Raise <b>τ</b> until the verdict flips. What does that say about firms in high-tax regimes?</li>
-        <li>Set <b>G = 0</b>. Which theory are you back to?</li>
-        <li>Why can only <em>two</em> debt levels ever be optimal here?</li>
-      </ol>
-    </div>
   </div>
-</div>
 
+  <div class="figcol">
+  <div class="figstick">
 <figure>
   <svg id="plot" viewBox="0 0 760 300" role="img" aria-labelledby="plotTitle plotDesc">
     <title id="plotTitle">Firm value as a function of today's debt</title>
@@ -159,6 +160,19 @@
   </svg>
   <figcaption id="cap"></figcaption>
 </figure>
+  </div>
+  </div>
+</div>
+
+<div class="qs">
+  <h2>Try to answer</h2>
+  <ol>
+    <li>Raise <b>p</b>. Why does more likely future need push leverage <em>down</em>?</li>
+    <li>Raise <b>τ</b> until the verdict flips. What does that say about firms in high-tax regimes?</li>
+    <li>Set <b>G = 0</b>. Which theory are you back to?</li>
+    <li>Why can only <em>two</em> debt levels ever be optimal here?</li>
+  </ol>
+</div>
 
 <footer>
   Ungraded self-practice for EBM232A05 · University of Groningen · Sebastian Pfeil.
