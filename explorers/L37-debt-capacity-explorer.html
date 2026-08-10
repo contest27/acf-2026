@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 37 · Debt capacity as a real option — ACF Explorer</title>
+<!--
+  Advanced Corporate Finance (EBM232A05) — University of Groningen
+  Week 37 Explorer: debt capacity as a real option.
+  Self-contained: no external CSS/JS/fonts. Works from GitHub Pages, from a
+  local file, or uploaded straight into Brightspace as a single .html topic.
+  Companion to Slides/L37-capital-structure-dynamics.tex (Figure 1).
+  UNGRADED self-practice. The by-hand computation lives in the problem set.
+-->
+<style>
+  :root{
+    --rugred:#C1002A; --rugblue:#1F6FB2; --ruggrey:#8A8A8A;
+    --ink:#1D1D1B; --muted:#5f5f5c; --line:#e2e2df;
+    --bg:#ffffff; --panel:#f7f7f5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --rugred:#e8536f; --rugblue:#63b3ed; --ruggrey:#9a9a9a;
+           --ink:#ececeb; --muted:#a8a8a4; --line:#3a3a38;
+           --bg:#1b1b1a; --panel:#242423; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);
+       font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+       font-size:16px;line-height:1.5;}
+  .wrap{max-width:900px;margin:0 auto}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  header{border-bottom:2px solid var(--rugred);padding-bottom:10px;margin-bottom:18px}
+  .kicker{color:var(--rugred);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+  h1{font-size:23px;margin:4px 0 2px;font-weight:600}
+  .sub{color:var(--muted);font-size:14px}
+  .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
+        border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  fieldset{border:1px solid var(--line);border-radius:8px;padding:14px 16px 6px;margin:0}
+  legend{font-size:12.5px;font-weight:600;color:var(--muted);padding:0 6px;text-transform:uppercase;letter-spacing:.03em}
+  .row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:6px 10px;margin-bottom:14px}
+  .row .lbl{font-size:14px}
+  .row .lbl small{display:block;color:var(--muted);font-size:12px;line-height:1.25}
+  .row output{grid-column:2;justify-self:end;font-variant-numeric:tabular-nums;
+              font-family:"Fira Mono",ui-monospace,monospace;font-size:14px}
+  .row input[type=range]{grid-column:1/-1;width:100%;-webkit-appearance:none;appearance:none;
+        height:4px;border-radius:999px;background:var(--line);outline:none;margin:2px 0 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+        background:var(--rugred);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;
+        background:var(--rugred);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]:focus-visible{outline:2px solid var(--rugblue);outline-offset:3px}
+  .verdict{border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--panel);text-align:center}
+  .cmp{font-family:"Fira Mono",ui-monospace,monospace;font-size:19px;margin-bottom:4px;font-variant-numeric:tabular-nums}
+  .cmp .win{font-weight:600}
+  .pill{display:inline-block;padding:4px 13px;border-radius:999px;font-size:13px;font-weight:600;margin:8px 0 4px}
+  .pill.preserve{background:rgba(31,111,178,.14);color:var(--rugblue)}
+  .pill.lever{background:rgba(193,0,42,.12);color:var(--rugred)}
+  .pill.tie{background:var(--line);color:var(--muted)}
+  .vsum{font-size:13.5px;color:var(--muted);margin-top:6px}
+  .vsum b{color:var(--ink);font-variant-numeric:tabular-nums}
+  figure{margin:22px 0 0}
+  svg{width:100%;height:auto;display:block}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:8px}
+  .presets{margin-top:2px;font-size:13px;color:var(--muted)}
+  .presets button{font:inherit;font-size:12.5px;padding:3px 11px;margin:0 4px 6px 0;border-radius:999px;
+        border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+  .presets button:hover{border-color:var(--rugred);color:var(--rugred)}
+  .qs{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  .qs h2{font-size:15px;margin:0 0 8px}
+  .qs ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--muted)}
+  .qs li{margin-bottom:6px}
+  footer{margin-top:24px;border-top:1px solid var(--line);padding-top:12px;font-size:12.5px;color:var(--muted)}
+  code{font-family:"Fira Mono",ui-monospace,monospace;font-size:.92em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Advanced Corporate Finance · Week 37</div>
+  <h1>Debt capacity as a real option</h1>
+  <div class="sub">Why a firm rationally borrows <em>less</em> than it can — explore the mechanism.</div>
+</header>
+
+<p class="lead">
+  At <b>t=0</b> the firm picks debt <code>D₀</code> up to capacity <code>D̄</code> and earns the net tax shield <code>τD₀</code>.
+  At <b>t=1</b>, with probability <code>p</code>, an opportunity arrives (cost <code>I</code>, NPV <code>G</code>) that can only be
+  debt-financed — fundable only if it kept room. Move the sliders: <b>lever to capacity</b> when the sure shield
+  <code>τI</code> beats the option value <code>pG</code>; otherwise <b>preserve</b>.
+</p>
+
+<h2 class="sr-only">Interactive explorer: adjust the net tax shield, debt capacity, investment size, arrival probability and project NPV to see whether the firm levers to capacity or preserves debt capacity, with the resulting firm value and a plot of value against today's debt.</h2>
+
+<div class="grid">
+  <fieldset>
+    <legend>Parameters</legend>
+    <div class="row">
+      <span class="lbl">τ — net tax shield<small>per euro of debt, post-clawback</small></span>
+      <output id="o_tau">20%</output>
+      <input type="range" id="tau" min="0" max="40" step="1" value="20" aria-label="net tax shield rate, percent">
+    </div>
+    <div class="row">
+      <span class="lbl">D̄ — debt capacity<small>the static optimum / ceiling</small></span>
+      <output id="o_dbar">100</output>
+      <input type="range" id="dbar" min="50" max="200" step="10" value="100" aria-label="debt capacity">
+    </div>
+    <div class="row">
+      <span class="lbl">I — investment size<small>debt needed at t=1</small></span>
+      <output id="o_inv">60</output>
+      <input type="range" id="inv" min="10" max="150" step="5" value="60" aria-label="investment size">
+    </div>
+    <div class="row">
+      <span class="lbl">p — probability it arrives<small>how likely is tomorrow's need</small></span>
+      <output id="o_p">0.50</output>
+      <input type="range" id="p" min="0" max="100" step="5" value="50" aria-label="probability the opportunity arrives, percent">
+    </div>
+    <div class="row">
+      <span class="lbl">G — NPV if taken<small>value of the opportunity</small></span>
+      <output id="o_g">25</output>
+      <input type="range" id="g" min="0" max="80" step="1" value="25" aria-label="project NPV">
+    </div>
+    <div class="presets">
+      try:
+      <button data-preset="lecture">lecture case</button>
+      <button data-preset="growth">growth firm</button>
+      <button data-preset="cashcow">mature cash cow</button>
+    </div>
+  </fieldset>
+
+  <div>
+    <div class="verdict">
+      <div class="cmp">
+        <span id="c_shield">τI = 12.0</span> &nbsp;<span id="c_rel">&lt;</span>&nbsp; <span id="c_opt">pG = 12.5</span>
+      </div>
+      <div class="pill preserve" id="pill">preserve capacity</div>
+      <div class="vsum">
+        optimal debt today <b id="v_d0">40</b> &nbsp;·&nbsp; under-levers by <b id="v_under">60</b><br>
+        firm value <b id="v_val">20.5</b> &nbsp;<span id="v_note"></span>
+      </div>
+    </div>
+    <div class="qs">
+      <h2>Try to answer</h2>
+      <ol>
+        <li>Raise <b>p</b>. Why does more likely future need push leverage <em>down</em>?</li>
+        <li>Raise <b>τ</b> until the verdict flips. What does that say about firms in high-tax regimes?</li>
+        <li>Set <b>G = 0</b>. Which theory are you back to?</li>
+        <li>Why can only <em>two</em> debt levels ever be optimal here?</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<figure>
+  <svg id="plot" viewBox="0 0 760 300" role="img" aria-labelledby="plotTitle plotDesc">
+    <title id="plotTitle">Firm value as a function of today's debt</title>
+    <desc id="plotDesc">Value rises with the tax shield, then drops by the option value pG once capacity for tomorrow's investment is used up.</desc>
+  </svg>
+  <figcaption id="cap"></figcaption>
+</figure>
+
+<footer>
+  Ungraded self-practice for EBM232A05 · University of Groningen · Sebastian Pfeil.
+  Companion to the Week-37 lecture; the by-hand calculations are in the problem set.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ids=["tau","dbar","inv","p","g"], el={};
+  ids.forEach(function(k){ el[k]=document.getElementById(k); });
+  var out={tau:"o_tau",dbar:"o_dbar",inv:"o_inv",p:"o_p",g:"o_g"};
+  var plot=document.getElementById("plot");
+  var PRESETS={
+    lecture:{tau:20,dbar:100,inv:60,p:50,g:25},
+    growth:{tau:12,dbar:100,inv:60,p:75,g:45},
+    cashcow:{tau:30,dbar:120,inv:40,p:20,g:12}
+  };
+  function n1(x){ return (Math.round(x*10)/10).toFixed(1); }
+
+  function state(){
+    var tau=+el.tau.value/100, dbar=+el.dbar.value, I=+el.inv.value,
+        p=+el.p.value/100, G=+el.g.value;
+    I=Math.min(I,dbar);                       // can't need more room than exists
+    var shield=tau*I, option=p*G;
+    var preserve = option > shield + 1e-9;
+    var tie = Math.abs(option-shield) <= 1e-9;
+    var d0 = preserve ? dbar-I : dbar;
+    var val = preserve ? tau*(dbar-I)+option : tau*dbar;
+    return {tau:tau,dbar:dbar,I:I,p:p,G:G,shield:shield,option:option,
+            preserve:preserve,tie:tie,d0:d0,val:val};
+  }
+
+  function paint(s){
+    document.getElementById("o_tau").textContent=el.tau.value+"%";
+    document.getElementById("o_dbar").textContent=el.dbar.value;
+    document.getElementById("o_inv").textContent=s.I;
+    document.getElementById("o_p").textContent=(+el.p.value/100).toFixed(2);
+    document.getElementById("o_g").textContent=el.g.value;
+
+    document.getElementById("c_shield").textContent="τI = "+n1(s.shield);
+    document.getElementById("c_opt").textContent="pG = "+n1(s.option);
+    document.getElementById("c_rel").textContent = s.tie ? "=" : (s.preserve ? "<" : ">");
+    document.getElementById("c_shield").className = (!s.preserve && !s.tie) ? "win" : "";
+    document.getElementById("c_opt").className = s.preserve ? "win" : "";
+
+    var pill=document.getElementById("pill");
+    if(s.tie){ pill.textContent="indifferent"; pill.className="pill tie"; }
+    else if(s.preserve){ pill.textContent="preserve capacity"; pill.className="pill preserve"; }
+    else { pill.textContent="lever to capacity"; pill.className="pill lever"; }
+
+    document.getElementById("v_d0").textContent=n1(s.d0);
+    document.getElementById("v_under").textContent = s.preserve ? n1(s.I) : "0";
+    document.getElementById("v_val").textContent=n1(s.val);
+    document.getElementById("v_note").textContent = s.preserve
+      ? "(shield "+n1(s.tau*(s.dbar-s.I))+" + option "+n1(s.option)+")"
+      : "(shield only — the option is gone)";
+
+    document.getElementById("cap").innerHTML = s.preserve
+      ? "The peak sits at <b>D₀ = D̄ − I = "+n1(s.d0)+"</b>: the firm stops short of capacity, holding a real option worth "+n1(s.option)+" rather than "+n1(s.shield)+" of certain shield."
+      : "No cliff worth avoiding: the sure shield ("+n1(s.shield)+") beats the option ("+n1(s.option)+"), so the firm levers all the way to <b>D̄ = "+n1(s.dbar)+"</b>.";
+  }
+
+  function draw(s){
+    var W=760,H=300,L=64,R=26,T=22,B=52;
+    var xmax=s.dbar*1.08;
+    var vals=[s.tau*(s.dbar-s.I)+s.option, s.tau*s.dbar, s.option, 1];
+    var ymax=Math.max.apply(null,vals)*1.18;
+    var X=function(v){ return L+(v/xmax)*(W-L-R); };
+    var Y=function(v){ return T+(1-v/ymax)*(H-T-B); };
+    var cut=s.dbar-s.I, g=[];
+
+    g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+Y(0)+'" stroke="var(--line)" stroke-width="1.5"/>');
+    g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+'" stroke="var(--line)" stroke-width="1.5"/>');
+    g.push('<text x="'+L+'" y="'+(T-7)+'" fill="var(--muted)" font-size="12">firm value V(D₀)</text>');
+    g.push('<text x="'+(W-R)+'" y="'+(Y(0)+34)+'" text-anchor="end" fill="var(--muted)" font-size="12">debt today D₀</text>');
+
+    // preserve branch: 0 .. D̄-I  (shield + option)
+    g.push('<line x1="'+X(0)+'" y1="'+Y(s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut+s.option)+
+           '" stroke="var(--rugblue)" stroke-width="2.5"/>');
+    // cliff
+    g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut+s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut)+
+           '" stroke="var(--rugred)" stroke-width="2" stroke-dasharray="5 4"/>');
+    // used-up branch: D̄-I .. D̄ (shield only)
+    g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut)+'" x2="'+X(s.dbar)+'" y2="'+Y(s.tau*s.dbar)+
+           '" stroke="var(--ruggrey)" stroke-width="2.5"/>');
+
+    // ticks
+    [[cut,"D̄ − I"],[s.dbar,"D̄"]].forEach(function(t){
+      g.push('<line x1="'+X(t[0])+'" y1="'+Y(0)+'" x2="'+X(t[0])+'" y2="'+(Y(0)+5)+'" stroke="var(--muted)" stroke-width="1"/>');
+      g.push('<text x="'+X(t[0])+'" y="'+(Y(0)+19)+'" text-anchor="middle" fill="var(--muted)" font-size="12">'+t[1]+'</text>');
+    });
+
+    // pG annotation on the cliff
+    var my=(Y(s.tau*cut+s.option)+Y(s.tau*cut))/2;
+    g.push('<text x="'+(X(cut)+9)+'" y="'+my+'" fill="var(--rugred)" font-size="13" dominant-baseline="middle">pG = '+n1(s.option)+'</text>');
+
+    // optimum marker
+    var ox=s.preserve?cut:s.dbar, oy=s.preserve?(s.tau*cut+s.option):(s.tau*s.dbar);
+    g.push('<circle cx="'+X(ox)+'" cy="'+Y(oy)+'" r="6" fill="'+(s.preserve?"var(--rugblue)":"var(--ruggrey)")+'"/>');
+    g.push('<text x="'+X(ox)+'" y="'+(Y(oy)-14)+'" text-anchor="middle" fill="'+(s.preserve?"var(--rugblue)":"var(--ruggrey)")+
+           '" font-size="12.5" font-weight="600">optimum</text>');
+
+    plot.innerHTML='<title id="plotTitle">Firm value as a function of today\'s debt</title>'+
+      '<desc id="plotDesc">Value rises with the tax shield at slope tau, then drops by pG at D-bar minus I once capacity is used up.</desc>'+g.join("");
+  }
+
+  function render(){ var s=state(); paint(s); draw(s); }
+  ids.forEach(function(k){ el[k].addEventListener("input",render); });
+  Array.prototype.forEach.call(document.querySelectorAll(".presets button"),function(b){
+    b.addEventListener("click",function(){
+      var P=PRESETS[b.getAttribute("data-preset")];
+      for(var k in P){ if(el[k]) el[k].value=P[k]; }
+      render();
+    });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

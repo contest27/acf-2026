@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 39 · The manager wedge — ACF Explorer</title>
+<!--
+  Advanced Corporate Finance (EBM232A05) — University of Groningen
+  Week 39 Explorer: the manager wedge, and what convex pay does to it.
+  Self-contained: no external CSS/JS/fonts. Works from GitHub Pages, from a
+  local file, or uploaded straight into Brightspace as a single .html topic.
+  Companion to Slides/L39-incentives-compensation.tex (both figures).
+  UNGRADED self-practice. The by-hand computation lives in the problem set.
+
+  MODEL.  Linear contract w = alpha + beta*y, plus option pay with vega nu.
+    CE(beta) = beta*G - k*beta^2 + nu*v ,   k = (r/2)*v ,  v = Delta-sigma^2
+  Shareholders (diversified) take the project iff G >= 0, at every beta.
+  The manager takes it iff CE >= 0. The gap between the two rules is the wedge.
+
+  THE POINT OF THIS EXPLORER is the COMPARATIVE STATICS panel: every slider
+  is a parameter, and next to it sits the partial derivative it moves, its
+  sign, its value here, and -- where one exists -- the empirical estimate
+  that measures exactly that derivative. Some rows have no such estimate,
+  because the parameter is unobservable. That is deliberate and is itself
+  the lesson: not every comparative static is testable.
+-->
+<style>
+  :root{
+    --rugred:#C1002A; --rugblue:#1F6FB2; --ruggrey:#8A8A8A;
+    --ink:#1D1D1B; --muted:#5f5f5c; --line:#e2e2df;
+    --bg:#ffffff; --panel:#f7f7f5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --rugred:#e8536f; --rugblue:#63b3ed; --ruggrey:#9a9a9a;
+           --ink:#ececeb; --muted:#a8a8a4; --line:#3a3a38;
+           --bg:#1b1b1a; --panel:#242423; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);
+       font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+       font-size:16px;line-height:1.5;}
+  .wrap{max-width:980px;margin:0 auto}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  header{border-bottom:2px solid var(--rugred);padding-bottom:10px;margin-bottom:18px}
+  .kicker{color:var(--rugred);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+  h1{font-size:23px;margin:4px 0 2px;font-weight:600}
+  .sub{color:var(--muted);font-size:14px}
+  .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
+        border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  fieldset{border:1px solid var(--line);border-radius:8px;padding:14px 16px 6px;margin:0}
+  legend{font-size:12.5px;font-weight:600;color:var(--muted);padding:0 6px;text-transform:uppercase;letter-spacing:.03em}
+  .row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:6px 10px;margin-bottom:13px}
+  .row .lbl{font-size:14px}
+  .row .lbl small{display:block;color:var(--muted);font-size:12px;line-height:1.25}
+  .row output{grid-column:2;justify-self:end;font-variant-numeric:tabular-nums;
+              font-family:"Fira Mono",ui-monospace,monospace;font-size:14px}
+  .row input[type=range]{grid-column:1/-1;width:100%;-webkit-appearance:none;appearance:none;
+        height:4px;border-radius:999px;background:var(--line);outline:none;margin:2px 0 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+        background:var(--rugred);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;
+        background:var(--rugred);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]:focus-visible{outline:2px solid var(--rugblue);outline-offset:3px}
+  .choice{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px}
+  .verdict{border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--panel);text-align:center}
+  .cmp{font-family:"Fira Mono",ui-monospace,monospace;font-size:18px;margin-bottom:2px;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:4px 13px;border-radius:999px;font-size:13px;font-weight:600;margin:9px 0 4px}
+  .pill.ok{background:rgba(31,111,178,.14);color:var(--rugblue)}
+  .pill.wedge{background:rgba(193,0,42,.12);color:var(--rugred)}
+  .pill.over{background:rgba(193,0,42,.20);color:var(--rugred)}
+  .pill.tie{background:var(--line);color:var(--muted)}
+  .vsum{font-size:13.5px;color:var(--muted);margin-top:6px}
+  .vsum b{color:var(--ink);font-variant-numeric:tabular-nums}
+  figure{margin:22px 0 0}
+  svg{width:100%;height:auto;display:block}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:8px}
+  .presets{margin-top:2px;font-size:13px;color:var(--muted)}
+  .presets button{font:inherit;font-size:12.5px;padding:3px 11px;margin:0 4px 6px 0;border-radius:999px;
+        border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+  .presets button:hover{border-color:var(--rugred);color:var(--rugred)}
+  .cs{margin-top:28px}
+  .cs h2{font-size:16px;margin:0 0 4px}
+  .cs .csnote{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+  /* the live reading of the last slider moved — this is where the idea lands */
+  .ticker{margin-top:12px;border:1px dashed var(--line);border-radius:8px;padding:10px 13px;
+          font-size:13.5px;color:var(--muted);min-height:44px}
+  .ticker b{color:var(--ink)}
+  .ticker .mv{font-family:"Fira Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .ticker.up{border-color:var(--rugblue)} .ticker.down{border-color:var(--rugred)}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:8px;padding:13px 15px;background:var(--panel)}
+  .cardhead{font-size:14.5px;font-weight:600;margin-bottom:7px}
+  .cardhead span{color:var(--rugred)}
+  .cardlive{font-size:13.5px;padding:7px 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .cardlive b{font-variant-numeric:tabular-nums}
+  .cardnote{font-size:12.5px;color:var(--muted)}
+  .cardnote em{color:var(--ink);font-style:normal;font-weight:600}
+  .qs{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  .qs h2{font-size:15px;margin:0 0 8px}
+  .qs ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--muted)}
+  .qs li{margin-bottom:6px}
+  footer{margin-top:24px;border-top:1px solid var(--line);padding-top:12px;font-size:12.5px;color:var(--muted)}
+  code{font-family:"Fira Mono",ui-monospace,monospace;font-size:.92em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Advanced Corporate Finance · Week 39</div>
+  <h1>The manager wedge</h1>
+  <div class="sub">Why more equity can make a manager <em>more</em> cautious — and what convex pay does about it.</div>
+</header>
+
+<p class="lead">
+  Shareholders are diversified: they want any project with <code>G ≥ 0</code>, at every stake.
+  The manager is not. On a contract <code>w = α + βy</code> he weighs his share of the value
+  against the risk he is made to carry, and — if he also holds options — against the variance
+  those options are <em>paid</em> for:
+  <b><code>CE(β) = βG − kβ² + ν·Δσ²</code></b>, with <code>k = (r/2)·Δσ²</code>.
+  He takes the project iff <code>CE ≥ 0</code>. <b>The gap between his rule and theirs is the wedge.</b>
+</p>
+
+<h2 class="sr-only">Interactive explorer: adjust the manager's stake, the project's NPV and added variance, his risk aversion and his option vega, to see whether he accepts or refuses a project the shareholders want, together with the partial derivatives of his certainty equivalent and the empirical estimates that measure them.</h2>
+
+<div class="grid">
+  <fieldset>
+    <legend>Parameters</legend>
+    <div class="row">
+      <span class="lbl">G — project NPV<small>shareholders want it whenever this is ≥ 0</small></span>
+      <output id="o_g">10</output>
+      <input type="range" id="g" min="-10" max="30" step="1" value="10" aria-label="project net present value">
+    </div>
+    <div class="row">
+      <span class="lbl">Δσ² — variance it adds<small>how risky the project is</small></span>
+      <output id="o_v">50</output>
+      <input type="range" id="v" min="10" max="100" step="5" value="50" aria-label="variance added by the project">
+    </div>
+    <div class="row">
+      <span class="lbl">r — his risk aversion<small>how undiversified he is</small></span>
+      <output id="o_r">2.0</output>
+      <input type="range" id="r" min="5" max="50" step="1" value="20" aria-label="manager risk aversion, tenths">
+    </div>
+    <div class="row">
+      <span class="lbl">ν — vega of his option pay<small>value he gains per unit of variance</small></span>
+      <output id="o_nu">0.000</output>
+      <input type="range" id="nu" min="0" max="100" step="2" value="0" aria-label="vega of option pay, thousandths">
+    </div>
+    <div class="choice">
+      <div class="row">
+        <span class="lbl">β — his stake <small>the board's <em>choice</em>, not a parameter</small></span>
+        <output id="o_b">0.10</output>
+        <input type="range" id="b" min="0" max="50" step="1" value="10" aria-label="manager stake, percent">
+      </div>
+    </div>
+    <div class="presets">
+      try:
+      <button data-preset="lecture">lecture case</button>
+      <button data-preset="undiv">undiversified CEO</button>
+      <button data-preset="options">option-heavy pay</button>
+      <button data-preset="over">the overshoot</button>
+    </div>
+  </fieldset>
+
+  <div>
+    <div class="verdict">
+      <div class="cmp">
+        <span id="c_ce">CE = +0.50</span>
+      </div>
+      <div class="pill ok" id="pill">both want it</div>
+      <div class="vsum">
+        shareholders: <b id="v_sh">take</b> &nbsp;·&nbsp; manager: <b id="v_mg">take</b><br>
+        he tolerates a stake up to <b id="v_bmax">0.200</b>
+        &nbsp;·&nbsp; his appetite peaks at <b id="v_bpk">0.100</b><br>
+        <span id="v_note"></span>
+      </div>
+    </div>
+    <div class="qs">
+      <h2>Try to answer</h2>
+      <ol>
+        <li>From the lecture case, drag <b>β</b> right. His appetite <em>falls</em>. What is the board buying with that extra equity, and who pays for it?</li>
+        <li>With <b>ν = 0</b>, raise <b>Δσ²</b> — he gets worse off. Now set <b>ν = 0.030</b> and raise it again. What changed, and why is that the point of paying in options?</li>
+        <li>Set <b>G</b> negative and raise <b>ν</b> until he accepts. Who pays for <em>that</em> project?</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<figure>
+  <svg id="plot" viewBox="0 0 940 320" role="img" aria-labelledby="plotTitle plotDesc">
+    <title id="plotTitle">The manager's certainty equivalent against his stake</title>
+    <desc id="plotDesc">A concave curve: the linear gain from his share of the NPV, net of a quadratic risk cost.</desc>
+  </svg>
+  <figcaption id="cap"></figcaption>
+</figure>
+
+<section class="cs">
+  <h2>Two movements carry this lecture</h2>
+  <p class="csnote">
+    Nudging a parameter and reading off which way the answer moves is <b>comparative statics</b> —
+    and it is what an exam question asks for, and what an empirical paper's headline coefficient
+    estimates. Most of the movements here are arithmetic. These two are not.
+  </p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="cardhead"><span>1</span> · More equity makes him <em>more</em> cautious</div>
+      <div class="cardlive" id="k1">—</div>
+      <div class="cardnote">The result you should not have expected, and the reason β = 1 is a corner to avoid rather than an ideal to fall short of.</div>
+    </div>
+    <div class="card">
+      <div class="cardhead"><span>2</span> · Options flip his attitude to risk</div>
+      <div class="cardlive" id="k2">—</div>
+      <div class="cardnote">This is <em>vega</em>. Coles–Daniel–Naveen (2006) measure it; Bakke et&nbsp;al. (2016) identify it causally off the FAS 123R shock — take the convexity away and hedging jumps.</div>
+    </div>
+  </div>
+
+  <div class="ticker" id="tick">Move any slider to see what it does.</div>
+</section>
+
+<footer>
+  Ungraded self-practice for EBM232A05 · University of Groningen · Sebastian Pfeil.
+  Companion to the Week-39 lecture; the by-hand calculations are in the problem set.<br>
+  Aggarwal &amp; Samwick (1999, <i>JPE</i> 107, 65–105) · Bakke, Mahmudi, Fernando &amp; Salas (2016, <i>JFE</i> 120, 623–643) ·
+  Coles, Daniel &amp; Naveen (2006, <i>JFE</i> 79, 431–468) · Jensen &amp; Murphy (1990, <i>JPE</i> 98, 225–264) ·
+  Prendergast (2002, <i>JPE</i> 110, 1071–1102).
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ids=["g","v","r","nu","b"], el={};
+  ids.forEach(function(k){ el[k]=document.getElementById(k); });
+  var plot=document.getElementById("plot");
+  // sliders carry integers; these are the display/model scalings
+  //   r  : tenths      (20 -> 2.0)
+  //   nu : ten-thousandths? no -> thousandths/100 (0..100 -> 0.000..0.100 step .002)
+  //   b  : percent     (10 -> 0.10)
+  var PRESETS={
+    lecture:{g:10, v:50, r:20, nu:0,  b:10},   // at the peak: dCE/dbeta = 0
+    undiv:  {g:10, v:50, r:30, nu:0,  b:30},   // he refuses
+    options:{g:10, v:50, r:30, nu:80, b:30},   // convexity buys him back
+    over:   {g:-5, v:50, r:20, nu:60, b:5}     // he takes a value-destroying project
+  };
+  function f(x,d){ return (x<0?"−":"") + Math.abs(x).toFixed(d); }
+
+  function state(){
+    var G=+el.g.value, v=+el.v.value, r=+el.r.value/10,
+        nu=+el.nu.value/1000, b=+el.b.value/100;
+    var k=(r/2)*v;
+    var CE = b*G - k*b*b + nu*v;
+    // largest stake he still tolerates: k*b^2 - G*b - nu*v = 0, positive root
+    var disc = G*G + 4*k*nu*v;
+    var bmax = k>0 ? (G + Math.sqrt(Math.max(disc,0)))/(2*k) : Infinity;
+    if(!(bmax>0)) bmax = 0;
+    var bpk  = k>0 ? G/(2*k) : Infinity;              // peak of the parabola
+    var bstar= k>0 ? G/k : Infinity;                  // zero crossing when nu = 0
+    return {G:G,v:v,r:r,nu:nu,b:b,k:k,CE:CE,bmax:bmax,bpk:bpk,bstar:bstar,
+            shTake: G>=0, mgTake: CE>=0,
+            d_b: G-2*k*b, d_g: b, d_v: nu-(r/2)*b*b, d_r: -(v/2)*b*b, d_nu: v,
+            d_bs: -2*G/(r*v*v)};
+  }
+
+  // The two movements that carry the lecture, stated in plain units rather
+  // than as derivatives: "one more point of equity costs him 0.35", not
+  // "dCE/dbeta = -35". Same content, and it is how an exam phrases it.
+  function keyReadings(s){
+    var step = s.d_b*0.01;                       // effect of +1 percentage point of beta
+    var k1;
+    if(Math.abs(step)<5e-4){
+      k1 = "Right now he is <b>exactly at the top</b>: one more point of equity changes his appetite by nothing at all. "+
+           "Past here, every further point <b>subtracts</b>.";
+    } else if(step>0){
+      k1 = "Right now one more point of equity would <b>raise</b> his appetite by <b>"+f(step,2)+"</b> — "+
+           "he is still below the peak at β = "+(isFinite(s.bpk)&&s.bpk>0?s.bpk.toFixed(2):"0.00")+".";
+    } else {
+      k1 = "Right now one more point of equity would <b>cut</b> his appetite by <b>"+f(-step,2)+"</b>. "+
+           "More alignment is buying <b>less</b> of the behaviour the board wants.";
+    }
+    var flip = (s.r/2)*s.b*s.b;                  // vega at which the sign turns
+    var k2;
+    if(Math.abs(s.d_v)<1e-6){
+      k2 = "Right now he is <b>indifferent</b> to risk: his stake and his options exactly offset.";
+    } else if(s.d_v<0){
+      k2 = "Right now he <b>dislikes</b> variance — a riskier project makes him worse off. His <b>stake</b> dominates. "+
+           (s.b>0 ? "Raise ν past <b>"+flip.toFixed(3)+"</b> and that reverses." : "");
+    } else {
+      k2 = "Right now he <b>likes</b> variance — a riskier project makes him better off. His <b>options</b> dominate. "+
+           (s.b>0 ? "Drop ν below <b>"+flip.toFixed(3)+"</b> and it reverses again." : "");
+    }
+    document.getElementById("k1").innerHTML=k1;
+    document.getElementById("k2").innerHTML=k2;
+  }
+
+  // the running commentary on the last slider touched
+  var LBL={g:"the project's NPV G", v:"the risk it adds Δσ²", r:"his risk aversion r",
+           nu:"his option vega ν", b:"his stake β"};
+  var FMT={g:function(x){return x;}, v:function(x){return x;},
+           r:function(x){return (x/10).toFixed(1);}, nu:function(x){return (x/1000).toFixed(3);},
+           b:function(x){return (x/100).toFixed(2);}};
+  var prev=null, lastKey=null;
+  function ticker(s){
+    var t=document.getElementById("tick");
+    if(!prev||!lastKey){ prev={CE:s.CE}; return; }
+    var d=s.CE-prev.CE, dir = Math.abs(d)<5e-4 ? "left it unchanged"
+        : (d>0 ? "<b>raised</b> his certainty equivalent" : "<b>lowered</b> his certainty equivalent");
+    t.className = "ticker "+(Math.abs(d)<5e-4?"":(d>0?"up":"down"));
+    t.innerHTML = "You moved <b>"+LBL[lastKey]+"</b> to <span class=\"mv\">"+FMT[lastKey](+el[lastKey].value)+
+      "</span> — that "+dir+(Math.abs(d)>=5e-4?" by <span class=\"mv\">"+f(Math.abs(d),2)+"</span>":"")+
+      ". <b>That is a comparative static</b>: one parameter moved, and you read off which way the answer went.";
+    prev={CE:s.CE};
+  }
+
+  function paint(s){
+    document.getElementById("o_g").textContent = s.G;
+    document.getElementById("o_v").textContent = s.v;
+    document.getElementById("o_r").textContent = s.r.toFixed(1);
+    document.getElementById("o_nu").textContent= s.nu.toFixed(3);
+    document.getElementById("o_b").textContent = s.b.toFixed(2);
+
+    document.getElementById("c_ce").textContent = "CE = " + (s.CE>=0?"+":"") + f(s.CE,2);
+
+    var pill=document.getElementById("pill");
+    if(s.shTake && s.mgTake){ pill.textContent="aligned — both want it"; pill.className="pill ok"; }
+    else if(s.shTake && !s.mgTake){ pill.textContent="the wedge — he refuses a good project"; pill.className="pill wedge"; }
+    else if(!s.shTake && s.mgTake){ pill.textContent="overshoot — he takes a bad one"; pill.className="pill over"; }
+    else { pill.textContent="aligned — both reject it"; pill.className="pill tie"; }
+
+    document.getElementById("v_sh").textContent = s.shTake ? "take" : "reject";
+    document.getElementById("v_mg").textContent = s.mgTake ? "take" : "refuse";
+    document.getElementById("v_bmax").textContent = isFinite(s.bmax)? s.bmax.toFixed(3) : "any";
+    document.getElementById("v_bpk").textContent  = isFinite(s.bpk) && s.bpk>0 ? s.bpk.toFixed(3) : "0.000";
+    document.getElementById("v_note").textContent =
+      (s.shTake && !s.mgTake) ? "Value of " + f(s.G,1) + " left on the table — by the pay package."
+      : (!s.shTake && s.mgTake) ? "Value of " + f(-s.G,1) + " destroyed — bought with convexity."
+      : "";
+
+    keyReadings(s);
+
+    var cap;
+    if(s.shTake && !s.mgTake){
+      cap = "His curve is <b>below zero</b> at β = "+s.b.toFixed(2)+". Shareholders want this project; he does not. "+
+            "Pull β back under <b>"+s.bmax.toFixed(3)+"</b> and he takes it — the same project, a smaller stake.";
+    } else if(!s.shTake && s.mgTake){
+      cap = "G is negative, so shareholders would reject — yet his curve is <b>above zero</b>, because the vega term ν·Δσ² = <b>"+
+            f(s.nu*s.v,2)+"</b> pays him for the variance. This is the <b>overshoot</b>.";
+    } else if(s.shTake){
+      var where = Math.abs(s.d_b)<1e-9
+        ? "sits exactly at the <b>peak</b> of his curve: ∂CE/∂β = 0, so the next slice of equity buys nothing at all"
+        : (s.d_b>0
+            ? "is on the <b>rising</b> part of his curve, so the stake is doing what the board intends"
+            : "is <b>past the peak</b>: ∂CE/∂β = "+f(s.d_b,2)+", so more equity now <em>reduces</em> his appetite");
+      cap = "He takes the project, and at β = "+s.b.toFixed(2)+" he "+where+
+            ". He would still accept up to β = <b>"+s.bmax.toFixed(3)+"</b>.";
+    } else {
+      cap = "Both sides reject: G &lt; 0 and the convexity is not enough to tempt him.";
+    }
+    document.getElementById("cap").innerHTML = cap;
+  }
+
+  function draw(s){
+    var W=940,H=320,L=68,R=210,T=24,B=54;
+    var bmaxAxis=0.5;
+    // vertical range from the curve over [0, 0.5]
+    var lo=0, hi=0, i, bb, y;
+    for(i=0;i<=100;i++){ bb=bmaxAxis*i/100; y=bb*s.G - s.k*bb*bb + s.nu*s.v;
+      if(y<lo) lo=y; if(y>hi) hi=y; }
+    var pad=Math.max((hi-lo)*0.16, 0.4); lo-=pad; hi+=pad;
+    var X=function(t){ return L+(t/bmaxAxis)*(W-L-R); };
+    var Y=function(t){ return T+(1-(t-lo)/(hi-lo))*(H-T-B); };
+    var g=[];
+
+    // zero line = the shareholders' rule, drawn as the benchmark
+    g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+
+           '" stroke="var(--rugblue)" stroke-width="2"/>');
+    g.push('<text x="'+(W-R+8)+'" y="'+(Y(0)+4)+'" fill="var(--rugblue)" font-size="12.5">shareholders: take iff G ≥ 0</text>');
+    // axes
+    g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.5"/>');
+    g.push('<text x="'+L+'" y="'+(T-8)+'" fill="var(--muted)" font-size="12">his certainty equivalent CE(β)</text>');
+    g.push('<text x="'+(W-R)+'" y="'+(H-B+34)+'" text-anchor="end" fill="var(--muted)" font-size="12">his stake β</text>');
+
+    // shaded refusal region (CE < 0) under the curve
+    var seg=[], inNeg=false, d="";
+    for(i=0;i<=200;i++){
+      bb=bmaxAxis*i/200; y=bb*s.G - s.k*bb*bb + s.nu*s.v;
+      if(y<0){ if(!inNeg){ d='M '+X(bb)+' '+Y(0); inNeg=true; } d+=' L '+X(bb)+' '+Y(y); }
+      else if(inNeg){ d+=' L '+X(bb)+' '+Y(0)+' Z'; seg.push(d); inNeg=false; }
+    }
+    if(inNeg){ d+=' L '+X(bmaxAxis)+' '+Y(0)+' Z'; seg.push(d); }
+    seg.forEach(function(p){ g.push('<path d="'+p+'" fill="var(--rugred)" opacity="0.13"/>'); });
+
+    // the curve
+    var pts=[];
+    for(i=0;i<=200;i++){ bb=bmaxAxis*i/200; y=bb*s.G - s.k*bb*bb + s.nu*s.v;
+      pts.push(X(bb).toFixed(1)+","+Y(y).toFixed(1)); }
+    g.push('<polyline points="'+pts.join(" ")+'" fill="none" stroke="var(--rugred)" stroke-width="2.5"/>');
+
+    // ticks on beta
+    [0,0.1,0.2,0.3,0.4,0.5].forEach(function(t){
+      g.push('<line x1="'+X(t)+'" y1="'+(H-B)+'" x2="'+X(t)+'" y2="'+(H-B+5)+'" stroke="var(--muted)" stroke-width="1"/>');
+      g.push('<text x="'+X(t)+'" y="'+(H-B+19)+'" text-anchor="middle" fill="var(--muted)" font-size="11.5">'+t.toFixed(1)+'</text>');
+    });
+
+    // the current stake
+    var cy=s.CE;
+    g.push('<line x1="'+X(s.b)+'" y1="'+Y(Math.min(0,cy))+'" x2="'+X(s.b)+'" y2="'+Y(Math.max(0,cy))+
+           '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>');
+    g.push('<circle cx="'+X(s.b)+'" cy="'+Y(cy)+'" r="6" fill="var(--rugred)"/>');
+    g.push('<text x="'+X(s.b)+'" y="'+(Y(cy)+(cy>=0?-14:22))+'" text-anchor="middle" fill="var(--rugred)" font-size="12.5" font-weight="600">β = '+s.b.toFixed(2)+'</text>');
+
+    // the tolerance threshold
+    if(isFinite(s.bmax) && s.bmax>0 && s.bmax<bmaxAxis){
+      g.push('<line x1="'+X(s.bmax)+'" y1="'+Y(0)+'" x2="'+X(s.bmax)+'" y2="'+(H-B)+
+             '" stroke="var(--rugred)" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>');
+      g.push('<text x="'+(X(s.bmax)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="12">he stops here</text>');
+    }
+    plot.innerHTML='<title id="plotTitle">The manager\'s certainty equivalent against his stake</title>'+
+      '<desc id="plotDesc">A concave curve of CE against beta; the shaded region below the blue zero line is where he refuses a project the shareholders want.</desc>'+g.join("");
+  }
+
+  function render(){ var s=state(); paint(s); draw(s); ticker(s); }
+  ids.forEach(function(k){
+    el[k].addEventListener("input",function(){ lastKey=k; render(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".presets button"),function(btn){
+    btn.addEventListener("click",function(){
+      var P=PRESETS[btn.getAttribute("data-preset")];
+      for(var k in P){ if(el[k]) el[k].value=P[k]; }
+      lastKey=null; prev=null;                 // a preset is a jump, not a nudge
+      render();
+      document.getElementById("tick").className="ticker";
+      document.getElementById("tick").innerHTML=
+        "Preset loaded. Now nudge <b>one</b> slider — that is the comparative static.";
+    });
+  });
+  render();
+})();
+</script>
+</body>
+</html>
