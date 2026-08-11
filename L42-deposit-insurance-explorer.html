@@ -175,7 +175,7 @@ sold and, for sixty years, nobody priced. Its value is <code>S</code>.
 
     <div class="row">
       <label for="s"><span>Asset risk &nbsp;<code>s</code></span><span class="val" id="o_s">&plusmn;30</span></label>
-      <input type="range" id="s" min="0" max="60" step="2" value="30" aria-label="Asset risk: the spread of asset value around 100">
+      <input type="range" id="s" min="0" max="60" step="2" value="50" aria-label="Asset risk: the spread of asset value around 100">
       <div class="hint">Assets pay <span id="h_states">70 or 130</span>. Expected assets stay at 100 whatever you do here.</div>
     </div>
 
@@ -399,7 +399,16 @@ sold and, for sixty years, nobody priced. Its value is <code>S</code>.
   // each branches so a regime change is ANNOUNCED when it happens.
   function keyReadings(st){
     var k1;
-    if(!st.defaults){
+    if(!st.defaults && st.s === st.w){
+      // EXACTLY on the kink. The old text read the left-hand value here and
+      // announced that one more point of risk was worth nothing — but s = w is
+      // precisely where that stops being true: the right-hand value is 0.50.
+      // Both sliders are integer-stepped, so the equality test is exact.
+      k1 = "Capital covers the worst state <b>exactly</b>, with nothing to spare. This is the "
+         + "kink: one point <em>less</em> risk is still worth <b>" + eur(0) + "</b> to "
+         + "shareholders, but one point <em>more</em> is already worth <b>" + eur(0.5) + "</b>. "
+         + "The insurer is not on the hook yet &mdash; and is one notch away from being on it.";
+    } else if(!st.defaults){
       var room = st.w - st.s;
       k1 = "Capital covers the worst state with <b>" + eur(room) + "</b> to spare, so one more "
          + "point of risk is worth <b>" + eur(0) + "</b> to shareholders. The insurer is not "
@@ -456,7 +465,11 @@ sold and, for sixty years, nobody priced. Its value is <code>S</code>.
     o.push('<line x1="'+L+'" y1="'+B+'" x2="'+L+'" y2="'+(T-8)+'" stroke="var(--ruggrey)" stroke-width="1"/>');
     for(var t=0;t<=SMAX;t+=10){
       o.push('<line x1="'+X(t)+'" y1="'+B+'" x2="'+X(t)+'" y2="'+(B+5)+'" stroke="var(--ruggrey)" stroke-width="1"/>');
-      o.push('<text x="'+X(t)+'" y="'+(B+20)+'" text-anchor="middle" font-size="13" fill="var(--muted)">'+t+'</text>');
+      // the last tick's number is suppressed: the axis title is right-anchored
+      // in that corner and the two were printing on top of each other
+      if(t < SMAX){
+        o.push('<text x="'+X(t)+'" y="'+(B+20)+'" text-anchor="middle" font-size="13" fill="var(--muted)">'+t+'</text>');
+      }
     }
     for(var u=0;u<=YMAX;u+=8){
       o.push('<line x1="'+(L-5)+'" y1="'+Y(u)+'" x2="'+L+'" y2="'+Y(u)+'" stroke="var(--ruggrey)" stroke-width="1"/>');

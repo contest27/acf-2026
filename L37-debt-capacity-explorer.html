@@ -134,7 +134,7 @@
     <div class="row">
       <span class="lbl">G — NPV if taken<small>value of the opportunity</small></span>
       <output id="o_g">25</output>
-      <input type="range" id="g" min="0" max="80" step="1" value="25" aria-label="project NPV">
+      <input type="range" id="g" min="0" max="80" step="1" value="35" aria-label="project NPV">
     </div>
     <div class="presets">
       try:
@@ -202,14 +202,20 @@
   function state(){
     var tau=+el.tau.value/100, dbar=+el.dbar.value, I=+el.inv.value,
         p=+el.p.value/100, G=+el.g.value;
-    I=Math.min(I,dbar);                       // can't need more room than exists
+    // The opportunity needs I of UNUSED room at t=1, and the most the firm can
+    // ever leave is D-bar (at D0 = 0). So when I > D-bar no leverage choice
+    // keeps the option alive: it is out of reach at every D0, and the firm
+    // takes the certain shield. The old line here was I = min(I, D-bar), which
+    // quietly rewrote an unfundable project into a fundable one — the slider
+    // said 150, the model used 100, and nothing on screen said so.
+    var feasible = I <= dbar + 1e-9;
     var shield=tau*I, option=p*G;
-    var preserve = option > shield + 1e-9;
-    var tie = Math.abs(option-shield) <= 1e-9;
+    var preserve = feasible && option > shield + 1e-9;
+    var tie = feasible && Math.abs(option-shield) <= 1e-9;
     var d0 = preserve ? dbar-I : dbar;
     var val = preserve ? tau*(dbar-I)+option : tau*dbar;
     return {tau:tau,dbar:dbar,I:I,p:p,G:G,shield:shield,option:option,
-            preserve:preserve,tie:tie,d0:d0,val:val};
+            feasible:feasible,preserve:preserve,tie:tie,d0:d0,val:val};
   }
 
   function paint(s){
@@ -222,11 +228,13 @@
     document.getElementById("c_shield").textContent="τI = "+n1(s.shield);
     document.getElementById("c_opt").textContent="pG = "+n1(s.option);
     document.getElementById("c_rel").textContent = s.tie ? "=" : (s.preserve ? "<" : ">");
-    document.getElementById("c_shield").className = (!s.preserve && !s.tie) ? "win" : "";
-    document.getElementById("c_opt").className = s.preserve ? "win" : "";
+    // nothing wins the comparison when the option cannot be held at any D₀
+    document.getElementById("c_shield").className = (s.feasible && !s.preserve && !s.tie) ? "win" : "";
+    document.getElementById("c_opt").className = (s.feasible && s.preserve) ? "win" : "";
 
     var pill=document.getElementById("pill");
-    if(s.tie){ pill.textContent="indifferent"; pill.className="pill tie"; }
+    if(!s.feasible){ pill.textContent="the option is out of reach"; pill.className="pill tie"; }
+    else if(s.tie){ pill.textContent="indifferent"; pill.className="pill tie"; }
     else if(s.preserve){ pill.textContent="preserve capacity"; pill.className="pill preserve"; }
     else { pill.textContent="lever to capacity"; pill.className="pill lever"; }
 
@@ -235,17 +243,21 @@
     document.getElementById("v_val").textContent=n1(s.val);
     document.getElementById("v_note").textContent = s.preserve
       ? "(shield "+n1(s.tau*(s.dbar-s.I))+" + option "+n1(s.option)+")"
-      : "(shield only — the option is gone)";
+      : (s.feasible ? "(shield only — the option is gone)"
+                    : "(shield only — no D₀ leaves room for I)");
 
-    document.getElementById("cap").innerHTML = s.preserve
+    document.getElementById("cap").innerHTML = !s.feasible
+      ? "The opportunity needs <b>I = "+n1(s.I)+"</b> of unused room, but the firm's whole capacity is <b>D̄ = "+n1(s.dbar)+"</b>. Even at <b>D₀ = 0</b> there is not enough: the option cannot be preserved at <em>any</em> leverage, so the firm takes the certain shield. Debt capacity binds twice — once on today's debt, once on tomorrow's project."
+      : (s.preserve
       ? "The peak sits at <b>D₀ = D̄ − I = "+n1(s.d0)+"</b>: the firm stops short of capacity, holding a real option worth "+n1(s.option)+" rather than "+n1(s.shield)+" of certain shield."
-      : "No cliff worth avoiding: the sure shield ("+n1(s.shield)+") beats the option ("+n1(s.option)+"), so the firm levers all the way to <b>D̄ = "+n1(s.dbar)+"</b>.";
+      : "No cliff worth avoiding: the sure shield ("+n1(s.shield)+") beats the option ("+n1(s.option)+"), so the firm levers all the way to <b>D̄ = "+n1(s.dbar)+"</b>.");
   }
 
   function draw(s){
     var W=760,H=300,L=64,R=26,T=22,B=52;
     var xmax=s.dbar*1.08;
-    var vals=[s.tau*(s.dbar-s.I)+s.option, s.tau*s.dbar, s.option, 1];
+    var vals = s.feasible ? [s.tau*(s.dbar-s.I)+s.option, s.tau*s.dbar, s.option, 1]
+                          : [s.tau*s.dbar, 1];   // the option is never drawn, so it must not set the scale
     var ymax=Math.max.apply(null,vals)*1.18;
     var X=function(v){ return L+(v/xmax)*(W-L-R); };
     var Y=function(v){ return T+(1-v/ymax)*(H-T-B); };
@@ -256,25 +268,36 @@
     g.push('<text x="'+L+'" y="'+(T-7)+'" fill="var(--muted)" font-size="12">firm value V(D₀)</text>');
     g.push('<text x="'+(W-R)+'" y="'+(Y(0)+34)+'" text-anchor="end" fill="var(--muted)" font-size="12">debt today D₀</text>');
 
-    // preserve branch: 0 .. D̄-I  (shield + option)
-    g.push('<line x1="'+X(0)+'" y1="'+Y(s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut+s.option)+
-           '" stroke="var(--rugblue)" stroke-width="2.5"/>');
-    // cliff
-    g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut+s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut)+
-           '" stroke="var(--rugred)" stroke-width="2" stroke-dasharray="5 4"/>');
-    // used-up branch: D̄-I .. D̄ (shield only)
-    g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut)+'" x2="'+X(s.dbar)+'" y2="'+Y(s.tau*s.dbar)+
-           '" stroke="var(--ruggrey)" stroke-width="2.5"/>');
+    if(s.feasible){
+      // preserve branch: 0 .. D̄-I  (shield + option)
+      g.push('<line x1="'+X(0)+'" y1="'+Y(s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut+s.option)+
+             '" stroke="var(--rugblue)" stroke-width="2.5"/>');
+      // cliff
+      g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut+s.option)+'" x2="'+X(cut)+'" y2="'+Y(s.tau*cut)+
+             '" stroke="var(--rugred)" stroke-width="2" stroke-dasharray="5 4"/>');
+      // used-up branch: D̄-I .. D̄ (shield only)
+      g.push('<line x1="'+X(cut)+'" y1="'+Y(s.tau*cut)+'" x2="'+X(s.dbar)+'" y2="'+Y(s.tau*s.dbar)+
+             '" stroke="var(--ruggrey)" stroke-width="2.5"/>');
+    } else {
+      // I > D̄: no cliff exists, because there is no D₀ at which the option
+      // survives. Value is the plain tax shield over the whole range.
+      g.push('<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(s.dbar)+'" y2="'+Y(s.tau*s.dbar)+
+             '" stroke="var(--ruggrey)" stroke-width="2.5"/>');
+    }
 
     // ticks
-    [[cut,"D̄ − I"],[s.dbar,"D̄"]].forEach(function(t){
+    (s.feasible ? [[cut,"D̄ − I"],[s.dbar,"D̄"]] : [[s.dbar,"D̄"]]).forEach(function(t){
       g.push('<line x1="'+X(t[0])+'" y1="'+Y(0)+'" x2="'+X(t[0])+'" y2="'+(Y(0)+5)+'" stroke="var(--muted)" stroke-width="1"/>');
       g.push('<text x="'+X(t[0])+'" y="'+(Y(0)+19)+'" text-anchor="middle" fill="var(--muted)" font-size="12">'+t[1]+'</text>');
     });
 
     // pG annotation on the cliff
-    var my=(Y(s.tau*cut+s.option)+Y(s.tau*cut))/2;
-    g.push('<text x="'+(X(cut)+9)+'" y="'+my+'" fill="var(--rugred)" font-size="13" dominant-baseline="middle">pG = '+n1(s.option)+'</text>');
+    if(s.feasible){
+      var my=(Y(s.tau*cut+s.option)+Y(s.tau*cut))/2;
+      g.push('<text x="'+(X(cut)+9)+'" y="'+my+'" fill="var(--rugred)" font-size="13" dominant-baseline="middle">pG = '+n1(s.option)+'</text>');
+    } else {
+      g.push('<text x="'+X(s.dbar*0.5)+'" y="'+(T+16)+'" text-anchor="middle" fill="var(--muted)" font-size="12.5">no D₀ leaves I of room — the option never enters</text>');
+    }
 
     // optimum marker
     var ox=s.preserve?cut:s.dbar, oy=s.preserve?(s.tau*cut+s.option):(s.tau*s.dbar);

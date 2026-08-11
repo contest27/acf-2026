@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week 43 · The manager's stake — ACF Explorer</title>
+<title>Week 43 · Where the dividend starts — ACF Explorer</title>
 <!--
   Advanced Corporate Finance (EBM232A05) — University of Groningen
   Week 43 · Payout policy (dynamic).
@@ -11,30 +11,120 @@
 
   Self-contained: no external CSS, JS, fonts or images.
 
-  WHAT THIS SIMULATES, AND WHAT IT DOES NOT.
-  The manager's stake W follows, in discrete steps of dt,
+  ==================================================================
+  WHY THIS WAS REBUILT (2026-08-10)
+  ==================================================================
+  The previous version had W0, the manager's starting stake, on a
+  slider, and NORMALISED THE PAYOUT BOUNDARY TO 1. Both are wrong for
+  this lecture, and in the same way.
 
-      W <- W + gamma*W*dt + lambda*sigma*sqrt(dt)*eps,   eps ~ N(0,1)
+    - W0 is not a free parameter. In the contract the investors choose
+      the agent's initial promised value to maximise their own, so
+      W0 = argmax p(W). Dragging it teaches students that the starting
+      point is a modelling choice. It is an OUTCOME.
+    - The payout boundary is the one object this week derives. Fixing
+      it at 1 meant the sentence "payout is a boundary, not a rule"
+      could not be demonstrated: the boundary never moved.
 
-  absorbed at W = 0 (liquidation) and reflected at W = Wbar (a dividend
-  is paid and the stake is pushed back down). Wbar is NORMALISED TO 1,
-  so W0 is read as a fraction of the payout boundary.
+  So this version SOLVES the contract instead of assuming it. The
+  boundary and the starting stake both come out of one value function,
+  and the sliders move them.
 
-  The boundary is TAKEN AS GIVEN, not solved. Solving for Wbar means
-  solving the HJB equation of DeMarzo-Sannikov, which is a PhD exercise
-  and is not what this course does. What the full model says about the
-  boundary is reported in the footer, with the signs verified against
-  DS06's Table I — including one the deck deliberately does NOT claim.
+  ==================================================================
+  THE MODEL
+  ==================================================================
+  DeMarzo, Fishman, He and Wang (2012), scaled by capital: w = W/K is
+  the manager's stake per euro of capital, p(w) = P/K is the investors'
+  value per euro of capital. DeMarzo-Sannikov (2006) is the special
+  case with no investment, so ONE solver serves both halves of the
+  lecture — the payout boundary and the q-distortion.
 
-  THE SIGN FLIP is the share of firms that are liquidated BEFORE they
-  ever pay a dividend. It crosses one half, and when it does, "the
-  typical firm in this industry never pays a dividend" stops being a
-  statement about tax clienteles and becomes a statement about
-  accumulated slack. That is the DeAngelo-DeAngelo-Stulz cross-section
-  generated one path at a time.
+      r p = mu - g(i) + (i - delta)[p - w p'] + gamma w p'
+            + 0.5 (lambda sigma)^2 p''
 
-  Seeded RNG (mulberry32) so the picture is reproducible in class: the
-  same sliders always give the same paths.
+      g(i) = i + theta i^2 / 2      adjustment cost per unit capital
+      i    = (q_m - 1) / theta      investment rate, from the FOC
+      q_m  = p - w p'               MARGINAL q
+      q_a  = p + w                  AVERAGE q  (firm value per unit K)
+
+  Three boundary conditions, and the third is the one that matters:
+
+      p(0)   = ell    liquidation: the firm is wound up at w = 0
+      p'(wbar) = -1   value matching: at the ceiling a euro retained is
+                      worth exactly a euro paid out
+      p''(wbar) = 0   SUPER-CONTACT: this is what PICKS wbar. The
+                      boundary is optimal, not imposed.
+
+  ==================================================================
+  HOW IT IS SOLVED
+  ==================================================================
+  At wbar the three conditions collapse the ODE to a quadratic in
+  q = p(wbar) + wbar; we take the smaller root (the larger one violates
+  transversality — it is the exploding-growth solution). That gives a
+  complete terminal condition, so: guess wbar, integrate RK4 BACKWARDS
+  to w = 0, and bisect on wbar until p(0) = ell. About 50,000 RK4 steps
+  per repaint, which is well inside a drag frame.
+
+  Nothing here is fitted to data. The technology (r, delta, theta, mu)
+  is held fixed and stated in the footer; only the four frictions move.
+
+  ==================================================================
+  WHAT WAS VERIFIED BEFORE THIS PAGE WAS WRITTEN
+  ==================================================================
+  Every claim the page makes was checked numerically first, because a
+  comparative static asserted in prose and contradicted by the solver
+  is worse than no Explorer at all.
+
+    - wbar depends on lambda and sigma ONLY through the product
+      lambda*sigma. Checked: wbar = 0.615027 for (lambda, sigma) =
+      (.4,.25), (.2,.5), (.8,.125), (.5,.2) and (1,.1) — identical to
+      six decimal places. This is visible in the ODE: lambda appears
+      nowhere except in (lambda sigma)^2.
+    - BUT the observable credit line is wbar/lambda, so it moves the
+      OTHER WAY: lambda .2 -> 1.0 raises wbar from .355 to 1.236 while
+      the credit line FALLS from 1.774 to 1.236. That is DS06's Table I
+      "complex" effect of lambda, and it is the second result on this
+      page. The old version of this Explorer declined to say anything
+      about lambda; it no longer has to.
+    - sigma up -> wbar up (.05 -> .60 gives .167 -> 1.199). DS06
+      Table I: riskier cash flows, longer credit line.
+    - gamma up -> wbar down (.055 -> .20 gives .846 -> .327). The
+      impatience wedge is burnt every period the stake is carried.
+    - ell up -> wbar down, weakly (.639 -> .579 across the whole
+      range), and w0* down strongly (.289 -> .194). Reported honestly:
+      the salvage value moves where the contract STARTS him much more
+      than where it stops.
+    - marginal q <= average q everywhere, both increasing in w. The
+      gap is w(1+p'), so it is zero at w = 0, zero at the boundary
+      where p' = -1, and peaks at about w/wbar = 0.22.
+    - Hayashi limit: as lambda*sigma -> 0 the gap falls to 2% and
+      investment rises to 90% of first best. The static model is
+      nested, exactly as the deck says.
+    - The sign flip is reachable: at the default the firm is worth
+      p(w0*) = 1.13 against a capital cost of 1, so it is financed.
+      Walking each slider up from the default, the pill turns over at
+      sigma = 0.37, at lambda = 0.58, and at gamma = 0.13 — measured on
+      the page itself, not estimated, because the "Try this" list tells
+      students where to look and a wrong threshold there is an
+      instruction that cannot be carried out. That flip is DS06's own
+      sentence: a positive-NPV project that cannot be financed because
+      of the incentive constraints.
+
+  ==================================================================
+  THE COHORT PANEL
+  ==================================================================
+  Retained from the 2026-08-10 version, with THREE outcomes rather than
+  two (paid / liquidated / still waiting at the horizon — the third is
+  the majority under low volatility and is not a rounding artefact).
+  What changed: the simulation no longer starts wherever a slider was
+  left. It starts at the SOLVED w0* and runs to the SOLVED boundary,
+
+      dw = w (gamma - i(w) + delta) dt + lambda sigma dZ,
+
+  absorbed at 0. So "how long until the first dividend" is now a
+  prediction of the contract rather than of the student's dragging.
+  1000 seeded paths, so every share is an exact multiple of 0.1 point
+  and the three add to 100.0% on screen.
 -->
 <style>
   :root{
@@ -57,17 +147,18 @@
           color:var(--rugred);font-weight:600}
   h1{margin:6px 0 4px;font-size:26px;line-height:1.2;font-weight:600}
   .sub{color:var(--muted);font-size:15px}
-  .lead{margin:0 0 20px;font-size:15px}
+  .lead{margin:0 0 20px;font-size:15px;max-width:80ch}
   code{font-family:"Fira Mono",ui-monospace,monospace;font-size:.92em;
        background:var(--panel);padding:1px 4px;border-radius:3px}
-  .grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;margin-bottom:20px;align-items:start}
+  .grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;
+        margin-bottom:20px;align-items:start}
   .figcol{align-self:stretch;min-width:0}
   .figstick{position:sticky;top:12px}
   .figcol figure{margin:0}
+  .figcol figure + figure{margin-top:16px}
   .ctrlcol .verdict{margin-top:14px}
   .ctrlcol .row{margin-bottom:10px}
   .ctrlcol fieldset{padding:12px 14px 4px}
-  .lead{max-width:80ch}
   .qs{max-width:90ch}
   @media (max-width:820px){
     .grid{grid-template-columns:1fr}
@@ -108,14 +199,15 @@
   .vsum b{font-family:"Fira Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
   .qs{margin-top:14px;font-size:14px;color:var(--muted)}
   .qs ul{margin:6px 0 0;padding-left:20px}
+  .qs li{margin-bottom:5px}
   figure{margin:0 0 22px}
   svg{width:100%;height:auto;display:block}
   figcaption{font-size:14px;color:var(--muted);margin-top:6px}
-  .cs{border-top:1px solid var(--line);padding-top:18px}
+  .cs{border-top:1px solid var(--line);padding-top:18px;margin-top:8px}
   .cs h2{font-size:17px;margin:0 0 6px;font-weight:600}
-  .csnote{font-size:14px;color:var(--muted);margin:0 0 14px}
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media (max-width:760px){.cards{grid-template-columns:1fr}}
+  .csnote{font-size:14px;color:var(--muted);margin:0 0 14px;max-width:90ch}
+  .cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:900px){.cards{grid-template-columns:1fr}}
   .card{border:1px solid var(--line);border-radius:6px;padding:12px 14px}
   .cardhead{font-size:14px;font-weight:600;margin-bottom:6px}
   .cardhead span{color:var(--rugred)}
@@ -130,6 +222,9 @@
   .ticker.flat{border-left-color:var(--ruggrey)}
   .ticker .mv{font-family:"Fira Mono",ui-monospace,monospace;font-weight:600;
               font-variant-numeric:tabular-nums}
+  .sec{border-top:1px solid var(--line);padding-top:18px;margin-top:26px}
+  .sec h2{font-size:17px;margin:0 0 6px;font-weight:600}
+  .sec p{font-size:14px;color:var(--muted);margin:0 0 14px;max-width:90ch}
   footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);
          font-size:12.5px;color:var(--muted)}
 </style>
@@ -139,56 +234,65 @@
 
 <header>
   <div class="kicker">Advanced Corporate Finance · Week 43</div>
-  <h1>The manager's stake</h1>
-  <div class="sub">Why a dividend waits — and why some firms never get to pay one.</div>
+  <h1>Where the dividend starts</h1>
+  <div class="sub">The payout boundary is not a policy. It is the solution to a problem &mdash; so move the problem and watch it move.</div>
 </header>
 
 <p class="lead">
-The manager's stake <code>W</code> is the only thing standing between him and liquidation, and it
-moves with the cash flow because it <em>has to</em>. Hit the <b>floor</b> and the firm is wound up.
-Hit the <b>ceiling</b> and cash is paid out. The boundary is normalised to <code>1</code>, so
-<code>W&#8320;</code> below is read as a fraction of it &mdash; a young firm starts low, a mature
-one starts high. Everything you see is the same contract at different points.
+The manager&rsquo;s stake <code>W</code> is the only thing standing between him and liquidation, and it
+moves with the cash flow because it <em>has to</em>. Hit the <b>floor</b> and the firm is wound up;
+hit the <b>ceiling</b> and cash is paid out. This page does not put that ceiling anywhere &mdash; it
+<b>solves for it</b>, along with the point the contract starts him at. Everything is measured per
+euro of capital, so <code>w&#772; = 0.6</code> means he may build a claim worth sixty cents per euro
+of capital before a dividend is paid.
 </p>
 
 <div class="grid">
   <div class="ctrlcol">
   <fieldset>
-    <legend>The firm, and its manager</legend>
+    <legend>The friction</legend>
 
     <div class="presets">
       Start from:
-      <button type="button" data-preset="mature">a mature firm</button>
-      <button type="button" data-preset="young">a young firm</button>
+      <button type="button" data-preset="base">the base case</button>
+      <button type="button" data-preset="clear">easy to monitor</button>
       <button type="button" data-preset="opaque">hard to monitor</button>
-      <button type="button" data-preset="never">the firm that never pays</button>
+      <button type="button" data-preset="volatile">a volatile industry</button>
+      <button type="button" data-preset="impatient">an impatient manager</button>
+      <button type="button" data-preset="hayashi">almost no agency</button>
     </div>
 
     <div class="row">
-      <label for="w0">Starting stake <i>W</i>&#8320; (share of the ceiling)
-        <span class="val" id="w0-v">0.50</span></label>
-      <input type="range" id="w0" min="0.05" max="0.95" step="0.01" value="0.50">
-      <div class="hint">How much the firm has already accumulated.</div>
+      <label for="sig"><span>Cash-flow volatility &sigma;</span>
+        <span class="val" id="sig-v">0.25</span></label>
+      <input type="range" id="sig" min="0.05" max="0.45" step="0.01" value="0.25">
+      <div class="hint">Business risk, per euro of capital. Distinct from the agency wedge
+        below &mdash; this is the firm, not the manager.</div>
     </div>
 
     <div class="row">
-      <label for="sig">Cash-flow volatility &sigma;
-        <span class="val" id="sig-v">0.30</span></label>
-      <input type="range" id="sig" min="0.05" max="0.90" step="0.01" value="0.30">
+      <label for="lam"><span>Divertible share &lambda;</span>
+        <span class="val" id="lam-v">0.40</span></label>
+      <input type="range" id="lam" min="0.10" max="0.80" step="0.01" value="0.40">
+      <div class="hint">How much of a euro he could take. His stake must respond that much
+        harder per unit of cash flow to keep him honest, so &lambda; magnifies the movement of
+        <i>w</i> without the business becoming any riskier.</div>
     </div>
 
     <div class="row">
-      <label for="lam">Diversion rate &lambda;
-        <span class="val" id="lam-v">1.00</span></label>
-      <input type="range" id="lam" min="0.20" max="1.00" step="0.01" value="1.00">
-      <div class="hint">How much of a euro he could take. It sets how far his stake must move
-        per unit of cash flow &mdash; so it scales the whole path.</div>
+      <label for="gam"><span>His discount rate &gamma;</span>
+        <span class="val" id="gam-v">0.070</span></label>
+      <input type="range" id="gam" min="0.055" max="0.200" step="0.005" value="0.070">
+      <div class="hint" id="rho-hint">Investors discount at r = 5%. The wedge &rho; = &gamma;
+        &minus; r is burnt every period his stake is carried.</div>
     </div>
 
     <div class="row">
-      <label for="gam">Drift &gamma; &mdash; how fast the stake grows in a normal year
-        <span class="val" id="gam-v">0.08</span></label>
-      <input type="range" id="gam" min="0.00" max="0.25" step="0.005" value="0.08">
+      <label for="ell"><span>Liquidation value &ell;</span>
+        <span class="val" id="ell-v">0.60</span></label>
+      <input type="range" id="ell" min="0.00" max="1.00" step="0.01" value="0.60">
+      <div class="hint">What a euro of capital fetches if the firm is wound up. Week 38&rsquo;s
+        collateral and Week 42&rsquo;s bank capital, seen from the other side.</div>
     </div>
   </fieldset>
 
@@ -199,11 +303,18 @@ one starts high. Everything you see is the same contract at different points.
     <div class="qs">
       <b>Try this:</b>
       <ul>
-        <li>Start a firm low and raise volatility until the pill turns red. What just became true
-            about the <em>typical</em> firm in that industry?</li>
-        <li>Hold everything and drag <i>W</i>&#8320; from 0.15 to 0.85. That is not two firms.
-            It is one firm, twenty years apart.</li>
-        <li>Raise &lambda;. The path gets wilder without the firm getting any riskier &mdash; why?</li>
+        <li>Set &lambda; = 0.25 with &sigma; = 0.40, then &lambda; = 0.50 with &sigma; = 0.20.
+            Both are the same &lambda;&sigma;, so the boundary does <em>not</em> move &mdash;
+            it stays at 0.62. Now look at the credit line: it halves, from 2.46 to 1.23.</li>
+        <li>Push &sigma; up from 0.25 until the pill changes. It goes at <b>0.37</b>. The
+            project&rsquo;s cash flows never got worse &mdash; so what stopped it being
+            financeable?</li>
+        <li>Raise &gamma;. The ceiling comes <em>down</em>. Say out loud why a more impatient
+            manager is paid <em>sooner</em>.</li>
+        <li>Load <b>almost no agency</b>. The gap between the two <i>q</i> curves falls to 4%
+            and the firm invests 0.103 against the static benchmark&rsquo;s 0.120. Note what
+            does <em>not</em> happen: the red curve never goes flat, it gets squeezed into a
+            very short stretch of <i>w</i>. Hayashi is the limit, not a rival.</li>
       </ul>
     </div>
   </div>
@@ -212,55 +323,124 @@ one starts high. Everything you see is the same contract at different points.
   <div class="figcol">
   <div class="figstick">
 <figure>
-  <svg id="plot" viewBox="0 0 640 330" role="img"
-       aria-label="Simulated paths of the manager's stake between a liquidation floor and a payout ceiling."></svg>
-  <figcaption id="cap"></figcaption>
+  <svg id="vf" viewBox="0 0 640 316" role="img"
+       aria-label="The investors' value function against the manager's stake, showing the optimal payout boundary, the point the contract starts the manager at, and the cost of capital."></svg>
+  <figcaption id="cap-vf"></figcaption>
 </figure>
-  <div class="ticker flat" id="ticker">Move a slider.</div>
+  <div class="ticker flat" id="ticker">Move one slider to see the comparative static.</div>
   </div>
   </div>
 </div>
 
 <div class="cs">
-  <h2>Two readings</h2>
+  <h2>Three readings</h2>
   <p class="csnote">
-    Move one slider, watch one number move, and say which way and by how much. These two are
-    the ones worth carrying out of the room.
+    Move one slider at a time. These are the three sentences worth carrying out of the room &mdash;
+    each of them is a number on this page that you can make move.
   </p>
 
   <div class="cards">
     <div class="card">
-      <div class="cardhead"><span>1.</span> How long a dividend takes</div>
+      <div class="cardhead"><span>1.</span> The ceiling is chosen</div>
       <div class="cardlive" id="r1"></div>
       <div class="cardnote">
-        Payout is not a policy the firm follows &mdash; it is what happens when the stake reaches
-        the ceiling. So &ldquo;when does this firm start paying dividends?&rdquo; is a question
-        about <em>accumulation</em>, and the answer is a number of years rather than a payout ratio.
+        Nobody wrote a payout rule. The boundary is where a euro kept inside the firm stops being
+        worth more than a euro paid out &mdash; and that point depends on the friction, so payout
+        policy is a <em>consequence</em> of the agency problem, not a decision taken beside it.
       </div>
     </div>
 
     <div class="card">
-      <div class="cardhead"><span>2.</span> How many never get there</div>
+      <div class="cardhead"><span>2.</span> Two measures of slack, moving apart</div>
       <div class="cardlive" id="r2"></div>
       <div class="cardnote">
-        This is the cross-section DeAngelo, DeAngelo and Stulz measured, generated one path at a
-        time. Firms whose equity is mostly <em>earned</em> pay; firms whose equity is mostly
-        <em>contributed</em> mostly do not &mdash; and some of them are simply not around to.
+        &lambda; and &sigma; enter the problem only as the product &lambda;&sigma;, so they move
+        the manager&rsquo;s buffer identically. But the thing you can read off a balance sheet is
+        the credit line, <code>w&#772;/&lambda;</code> &mdash; and it moves the other way. Two
+        firms with the same buffer can look completely different to an analyst.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><span>3.</span> What average <i>q</i> gets wrong</div>
+      <div class="cardlive" id="r3"></div>
+      <div class="cardnote">
+        The gap is <code>w(1+p&prime;)</code>: zero at the floor, zero at the ceiling where
+        <code>p&prime; = &minus;1</code>, and widest in between. So the measurement error in a
+        <i>q</i>-regression is not a constant to be absorbed by a fixed effect &mdash; it is a
+        function of the state variable the regression left out.
       </div>
     </div>
   </div>
+</div>
 
+<div class="sec">
+  <h2>The same solution, read as investment</h2>
+  <p>
+    The value function already contains the investment policy: the first-order condition says
+    <code>i = (q<sub>m</sub> &minus; 1)/&theta;</code> with marginal <i>q</i> equal to
+    <code>p &minus; w p&prime;</code>. So no second model is needed &mdash; this is the deck&rsquo;s
+    second figure, derived rather than drawn.
+  </p>
+<figure>
+  <svg id="qfig" viewBox="0 0 640 400" role="img"
+       aria-label="Top: average q and marginal q against the manager's stake, with the gap between them shaded. Bottom: the investment rate against the manager's stake, against the flat first-best benchmark."></svg>
+  <figcaption id="cap-q"></figcaption>
+</figure>
+</div>
+
+<div class="sec">
+  <h2>And what it does to a cohort</h2>
+  <p>
+    A thousand firms, all written on this contract: each starts at the solved <i>w</i><sub>0</sub>*
+    and runs until its stake reaches one of the two boundaries. Nothing here is a free choice
+    &mdash; the starting point and the ceiling both came from the value function above.
+  </p>
+<figure>
+  <svg id="plot" viewBox="0 0 640 330" role="img"
+       aria-label="Cumulative share of the 1,000 simulated firms that have reached a first dividend, the share liquidated before ever paying one, and the share still between the boundaries, against years since today."></svg>
+  <figcaption id="cap"></figcaption>
+</figure>
+<figure>
+  <svg id="paths" viewBox="0 0 640 158" role="img"
+       aria-label="Three example paths of the manager's stake, each stopped at its first event."></svg>
+  <figcaption id="cap2"></figcaption>
+</figure>
+  <div class="cards" style="grid-template-columns:1fr 1fr;margin-top:6px">
+    <div class="card">
+      <div class="cardhead"><span>4.</span> Time to the first dividend</div>
+      <div class="cardlive" id="r4"></div>
+    </div>
+    <div class="card">
+      <div class="cardhead"><span>5.</span> How the cohort splits</div>
+      <div class="cardlive" id="r5"></div>
+      <div class="cardnote">
+        The DeAngelo, DeAngelo and Stulz intuition in <em>cohort</em> form. Their evidence is a
+        cross-section of firms that still exist; here you can also see the ones that were not
+        around to be counted.
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer>
-  <b>Model.</b> <code>W &larr; W + &gamma;W&middot;dt + &lambda;&sigma;&radic;dt&middot;&epsilon;</code>,
-  absorbed at <code>0</code>, reflected at <code>1</code>; 400 seeded paths, monthly steps, 30-year
-  horizon. <b>The ceiling is taken as given, not solved</b> &mdash; solving for it is the HJB
-  problem of DeMarzo&ndash;Sannikov and is well beyond this course. What the full model says about
-  where it sits: a <em>longer</em> distance to the ceiling for riskier cash flows, a shorter one
-  when the firm is worth more dead (DS06, Table I). The effect of &lambda; on that distance is,
-  in their word, <em>complex</em> &mdash; so this Explorer lets you move &lambda; and the ceiling
-  independently rather than pretending to a sign the paper does not claim.
+  <b>Model.</b> DeMarzo, Fishman, He and Wang (2012), scaled by capital, with
+  DeMarzo&ndash;Sannikov (2006) as the no-investment case. The investors&rsquo; value
+  <code>p(w)</code> solves
+  <code>r p = &mu; &minus; g(i) + (i&minus;&delta;)[p &minus; w p&prime;] + &gamma; w p&prime; +
+  &frac12;(&lambda;&sigma;)&sup2; p&Prime;</code> with <code>g(i) = i + &theta;i&sup2;/2</code>,
+  subject to <code>p(0) = &ell;</code>, <code>p&prime;(w&#772;) = &minus;1</code> and
+  <code>p&Prime;(w&#772;) = 0</code>. The third condition is <em>super-contact</em>: it is what
+  makes the boundary optimal rather than imposed, and it is why this page can claim to solve for
+  <code>w&#772;</code> rather than assume it. Solved by backward RK4 from the boundary with
+  bisection on <code>w&#772;</code>.
+  <b>Technology, held fixed:</b> <code>r = 5%</code>, <code>&delta; = 10%</code>,
+  <code>&theta; = 6</code>, <code>&mu; = 0.215</code>, giving a first-best
+  <code>q = 1.72</code> and 2% first-best growth. Only the four frictions move.
+  <b>Cohort:</b> <code>dw = w(&gamma; &minus; i(w) + &delta;)dt + &lambda;&sigma; dZ</code>,
+  absorbed at 0; at the ceiling a dividend is paid and the stake steps back to
+  <code>0.9 w&#772;</code>. 1,000 seeded paths, monthly steps, 30-year horizon. Every displayed
+  share is a <em>first</em>-hit statistic, so none of them depends on the size of that step-down.
   Ungraded self-practice.
 </footer>
 
@@ -269,9 +449,30 @@ one starts high. Everything you see is the same contract at different points.
 (function(){
   "use strict";
 
-  var ids = ["w0","sig","lam","gam"];
+  // ================================================================
+  // TECHNOLOGY — held fixed, and stated in the footer. These four are
+  // not sliders on purpose: they are the neoclassical part of the
+  // model, and the point of the page is that the FRICTIONS move the
+  // boundary. mu is backed out from a target first-best investment
+  // rate so that first-best growth is a round +2% per year.
+  // ================================================================
+  var R = 0.05, DELTA = 0.10, THETA = 6.0, I_FB = 0.12;
+  var Q_FB = 1 + THETA * I_FB;                       // 1.72
+  var MU   = (R + DELTA) * Q_FB - THETA * I_FB * I_FB / 2;   // 0.2148
+
+  // RK4 steps. The bisection runs on a COARSE grid and only the final
+  // solve — the one the figures are drawn from — runs fine. Checked
+  // before adopting: wbar agrees to six decimal places between the two
+  // (0.615027 at the default, 2.424930 at the largest boundary in the
+  // slider space), and the search cost falls from 6.5 ms to 1.5 ms.
+  var NGRID = 800, NSEARCH = 250, NBISECT = 44;
+
+  var ids = ["sig","lam","gam","ell"];
   var el = {}; ids.forEach(function(k){ el[k] = document.getElementById(k); });
-  var last = null;
+  var last = null;          // which slider moved last
+  var prev = null;          // its value BEFORE that move
+  var prevSol = null;       // the previous SOLUTION, so the ticker can state a
+                            // direction from evidence instead of asserting one
 
   function tiny(dp){ return 5 * Math.pow(10, -(dp + 1)); }
   function num(x, dp){
@@ -282,13 +483,127 @@ one starts high. Everything you see is the same contract at different points.
     return (v < 0 ? "−" : "") + Math.abs(v).toFixed(dp);
   }
   function pct(x, dp){
-    dp = (dp === undefined) ? 0 : dp;
+    dp = (dp === undefined) ? 1 : dp;
     var v = Number(x);
+    if (!isFinite(v)) return "—";
     if (Math.abs(v) < tiny(dp)) v = 0;
     return (v < 0 ? "−" : "") + Math.abs(v).toFixed(dp) + "%";
   }
 
-  // seeded RNG so the same sliders always give the same picture in class
+  // ================================================================
+  // THE SOLVER
+  // ================================================================
+
+  // At the boundary p'(wbar) = -1 and p''(wbar) = 0, so the ODE becomes
+  // an algebraic condition on q = p(wbar) + wbar:
+  //     (r+delta) q - (q-1)^2 / (2 theta) = mu - (gamma-r) wbar
+  // Two roots. The LARGER one is the exploding-growth solution and
+  // violates transversality, so we take the smaller.
+  function qBoundary(wbar, gam){
+    var B = 2 * THETA * (R + DELTA);
+    var C = 2 * THETA * (MU - (R + DELTA) - (gam - R) * wbar);
+    var d = B * B - 4 * C;
+    if (d < 0) return NaN;                 // no finite-value solution
+    return (B - Math.sqrt(d)) / 2 + 1;
+  }
+
+  // RK4 backwards from wbar to 0. Returns null if the solution blows up,
+  // which is what happens for a candidate wbar that is too large — the
+  // bisection below uses that as its signal.
+  function solveP(wbar, gam, lam, sig, N){
+    var q = qBoundary(wbar, gam);
+    if (!isFinite(q)) return null;
+    var v = (lam * sig) * (lam * sig);
+    var h = wbar / N;
+    var w = new Float64Array(N + 1), p = new Float64Array(N + 1), pp = new Float64Array(N + 1);
+    var cw = wbar, cp = q - wbar, cq = -1.0;
+
+    // derivative of [p, p'] with respect to w
+    function fp(W, P, PP){ return PP; }
+    function fq(W, P, PP){
+      var qm = P - W * PP;
+      var i  = (qm - 1) / THETA;
+      var g  = i + THETA * i * i / 2;
+      return (2 / v) * (R * P - MU + g - (i - DELTA) * qm - gam * W * PP);
+    }
+
+    w[N] = cw; p[N] = cp; pp[N] = cq;
+    for (var k = N; k > 0; k--){
+      var a1 = fp(cw, cp, cq),                       b1 = fq(cw, cp, cq);
+      var a2 = fp(cw - h/2, cp - h/2*a1, cq - h/2*b1),
+          b2 = fq(cw - h/2, cp - h/2*a1, cq - h/2*b1);
+      var a3 = fp(cw - h/2, cp - h/2*a2, cq - h/2*b2),
+          b3 = fq(cw - h/2, cp - h/2*a2, cq - h/2*b2);
+      var a4 = fp(cw - h, cp - h*a3, cq - h*b3),
+          b4 = fq(cw - h, cp - h*a3, cq - h*b3);
+      cp -= h/6 * (a1 + 2*a2 + 2*a3 + a4);
+      cq -= h/6 * (b1 + 2*b2 + 2*b3 + b4);
+      cw -= h;
+      if (!(isFinite(cp) && isFinite(cq) && Math.abs(cp) < 1e5 && Math.abs(cq) < 1e7)){
+        return null;
+      }
+      w[k-1] = cw; p[k-1] = cp; pp[k-1] = cq;
+    }
+    w[0] = 0;
+    return { w: w, p: p, pp: pp, N: N, wbar: wbar };
+  }
+
+  // Shoot on wbar until p(0) = ell. p(0) is decreasing in wbar (a bigger
+  // boundary makes the backward solution fall further and eventually
+  // diverge), so a plain bisection is safe once the bracket is found.
+  function findWbar(ell, gam, lam, sig){
+    function p0(wb){
+      var s = solveP(wb, gam, lam, sig, NSEARCH);
+      return s ? s.p[0] : -1e5;
+    }
+    var lo = 1e-4, hi = 0.05;
+    var guard = 0;
+    while (p0(hi) - ell > 0 && hi < 60 && guard++ < 40) hi *= 1.6;
+    for (var k = 0; k < NBISECT; k++){
+      var m = 0.5 * (lo + hi);
+      if (p0(m) - ell > 0) lo = m; else hi = m;
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  // Everything the page displays, derived from one solve.
+  function contract(st){
+    var wbar = findWbar(st.ell, st.gam, st.lam, st.sig);
+    var s = solveP(wbar, st.gam, st.lam, st.sig, NGRID);
+    if (!s) return null;
+
+    var N = s.N, k;
+    var qm = new Float64Array(N + 1), qa = new Float64Array(N + 1);
+    var inv = new Float64Array(N + 1), gap = new Float64Array(N + 1);
+    var k0 = 0, kw = 0;
+    for (k = 0; k <= N; k++){
+      qm[k]  = s.p[k] - s.w[k] * s.pp[k];            // marginal q
+      qa[k]  = s.p[k] + s.w[k];                      // average q = firm value / K
+      inv[k] = (qm[k] - 1) / THETA;                  // FOC
+      gap[k] = qa[k] - qm[k];                        // = w (1 + p')
+      if (s.p[k] > s.p[k0]) k0 = k;                  // w0* = argmax p
+      if (gap[k] > gap[kw]) kw = k;
+    }
+    return {
+      w: s.w, p: s.p, pp: s.pp, qm: qm, qa: qa, inv: inv, gap: gap,
+      N: N, wbar: wbar, k0: k0, kw: kw,
+      w0: s.w[k0], p0: s.p[k0],
+      creditLine: wbar / st.lam,
+      firmValue: qa[k0],
+      gapShare: qa[k0] > 0 ? gap[k0] / qa[k0] : 0,
+      invShare: inv[k0] / I_FB,
+      // The firm is financed only if investors' value at the starting
+      // point covers the cost of the capital, which is 1 per unit.
+      financed: s.p[k0] >= 1,
+      // If p'(0) <= 0 the investors would rather wind the firm up than
+      // start it at all: the contract is not worth writing.
+      degenerate: s.w[k0] < 1e-6
+    };
+  }
+
+  // ================================================================
+  // THE COHORT — now driven by the SOLVED contract
+  // ================================================================
   function mulberry32(a){
     return function(){
       a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -297,185 +612,677 @@ one starts high. Everything you see is the same contract at different points.
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  function normal(rng){                     // Box-Muller
-    var u = 1 - rng(), v = rng();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  // Box-Muller produces TWO independent normals per pair of uniforms; the
+  // obvious implementation throws one away and pays for a log, a sqrt and
+  // a cos on every draw. Keeping the spare halves the transcendental cost
+  // of the 360,000 draws below. The cache is reset at the start of each
+  // simulation, so the seeded reproducibility promise still holds: the
+  // same sliders give the same paths.
+  var spare = null;
+  function normalReset(){ spare = null; }
+  function normal(rng){
+    if (spare !== null){ var s = spare; spare = null; return s; }
+    var u = 1 - rng(), v = 2 * Math.PI * rng();
+    var r = Math.sqrt(-2 * Math.log(u));
+    spare = r * Math.sin(v);
+    return r * Math.cos(v);
   }
 
-  var NPATH = 400, YEARS = 30, PER_YEAR = 12;
+  var NPATH = 1000, YEARS = 30, PER_YEAR = 12;
+  var NPATH_TXT = "1,000";
   var DT = 1 / PER_YEAR, NSTEP = YEARS * PER_YEAR;
 
-  function simulate(st){
+  function simulate(st, con){
     var rng = mulberry32(20260801);
+    normalReset();
     var vol = st.lam * st.sig * Math.sqrt(DT);
+    var wbar = con.wbar, w0 = con.w0;
     var died = 0, paid = 0, firstPay = [], keep = [];
-    for (var p = 0; p < NPATH; p++){
-      var w = st.w0, t = 0, tFirst = -1, alive = true;
-      var trace = (p < 3) ? [[0, w]] : null;
+    var i;
+
+    // i(w) by linear interpolation on the solved grid, so the drift of
+    // the simulated stake is the CONTRACT's drift, not a sketch of it
+    function invAt(w){
+      var x = w / wbar * con.N;
+      if (!(x > 0)) return con.inv[0];
+      if (x >= con.N) return con.inv[con.N];
+      var j = x | 0, f = x - j;
+      return con.inv[j] * (1 - f) + con.inv[j + 1] * f;
+    }
+
+    var cumPay = new Float64Array(NSTEP + 1), cumLiq = new Float64Array(NSTEP + 1);
+
+    for (var pth = 0; pth < NPATH; pth++){
+      var w = w0, t = 0, tFirst = -1, alive = true;
+      var trace = (pth < 3) ? [[0, w]] : null;
+      var evStep = -1, evKind = "", evIdx = -1;
+
       for (var s = 1; s <= NSTEP; s++){
-        w = w + st.gam * w * DT + vol * normal(rng);
+        w = w + w * (st.gam - invAt(w) + DELTA) * DT + vol * normal(rng);
         t = s * DT;
-        if (w <= 0){ w = 0; alive = false; if (trace) trace.push([t, 0]); break; }
-        if (w >= 1){ w = 1; if (tFirst < 0) tFirst = t; if (trace) trace.push([t, 1]);
-                     w = 1 - 0.10; if (trace) trace.push([t, w]); continue; }
+        if (w <= 0){
+          w = 0; alive = false;
+          if (trace) trace.push([t, 0]);
+          if (evStep < 0){ evStep = s; evKind = "liq"; if (trace) evIdx = trace.length; }
+          break;
+        }
+        if (w >= wbar){
+          w = wbar;
+          if (tFirst < 0) tFirst = t;
+          if (trace) trace.push([t, wbar]);
+          if (evStep < 0){ evStep = s; evKind = "pay"; if (trace) evIdx = trace.length; }
+          w = 0.90 * wbar;              // fixed step-down, NOT a reflection
+          if (trace) trace.push([t, w]);
+          continue;
+        }
         if (trace) trace.push([t, w]);
       }
+
       if (tFirst >= 0){ paid++; firstPay.push(tFirst); }
-      if (!alive && tFirst < 0) died++;          // died before ever paying
-      if (trace) keep.push({ pts: trace, alive: alive, paid: tFirst >= 0 });
+      if (!alive && tFirst < 0) died++;
+      if (evStep > 0){ if (evKind === "pay") cumPay[evStep]++; else cumLiq[evStep]++; }
+      if (trace){
+        keep.push({ pts: (evIdx > 0) ? trace.slice(0, evIdx) : trace, kind: evKind });
+      }
     }
+
+    for (i = 1; i <= NSTEP; i++){ cumPay[i] += cumPay[i-1]; cumLiq[i] += cumLiq[i-1]; }
+    for (i = 0; i <= NSTEP; i++){ cumPay[i] /= NPATH; cumLiq[i] /= NPATH; }
+
     firstPay.sort(function(a,b){ return a - b; });
-    // CENSORED median over ALL firms, not just the payers. Conditioning
-    // on "firms that make it" is a survivorship trap and it shows: at
-    // high volatility the few survivors are the ones flung to the
-    // ceiling fastest, so the conditional median FALLS as the firm gets
-    // more fragile — "starts lowest, pays soonest", which reads as a
-    // bug and is really selection. Counting non-payers as never-paying
-    // makes the median agree with the verdict pill by construction.
+    // CENSORED median over ALL firms, not just the payers: conditioning
+    // on the survivors is a survivorship trap, and it shows — the few
+    // survivors of a fragile contract are the ones flung to the ceiling
+    // fastest, so the conditional median FALLS as the firm gets more
+    // fragile, which reads as a bug and is really selection.
     var half = Math.floor(NPATH / 2);
     var med = (firstPay.length > half) ? firstPay[half] : Infinity;
-    return { medFirst: med, shareDied: died / NPATH, sharePaid: paid / NPATH, traces: keep };
+
+    var sPaid = paid / NPATH, sDied = died / NPATH;
+    var sWait = 1 - sPaid - sDied;
+    if (Math.abs(sWait) < 1e-9) sWait = 0;
+    return { medFirst: med, shareDied: sDied, sharePaid: sPaid, shareWait: sWait,
+             cumPay: cumPay, cumLiq: cumLiq, traces: keep };
   }
 
   function state(){
-    return { w0: parseFloat(el.w0.value), sig: parseFloat(el.sig.value),
-             lam: parseFloat(el.lam.value), gam: parseFloat(el.gam.value) };
+    return { sig: parseFloat(el.sig.value), lam: parseFloat(el.lam.value),
+             gam: parseFloat(el.gam.value), ell: parseFloat(el.ell.value) };
   }
 
-  function paint(st, sim){
-    document.getElementById("w0-v").textContent  = st.w0.toFixed(2);
-    document.getElementById("sig-v").textContent = st.sig.toFixed(2);
-    document.getElementById("lam-v").textContent = st.lam.toFixed(2);
-    document.getElementById("gam-v").textContent = st.gam.toFixed(3);
+  // ================================================================
+  // DRAWING
+  // ================================================================
+  function svgColors(){
+    var css = getComputedStyle(document.documentElement);
+    return {
+      RED:  css.getPropertyValue("--rugred").trim()  || "#C1002A",
+      BLUE: css.getPropertyValue("--rugblue").trim() || "#1F6FB2",
+      GREY: css.getPropertyValue("--ruggrey").trim() || "#8A8A8A",
+      LINE: css.getPropertyValue("--line").trim()    || "#e2e2df",
+      INK:  css.getPropertyValue("--ink").trim()     || "#1D1D1B"
+    };
+  }
 
-    var dead = sim.shareDied * 100;
-    document.getElementById("cmp").innerHTML =
-      "died before paying: <span style='color:var(--" +
-      (dead > 50 ? "rugred" : "rugblue") + ")'>" + pct(dead) + "</span>";
+  // The horizontal axis is shared by the value function and the q panel
+  // so the boundary sits at the same place in both. It is a TWO-RUNG
+  // ladder rather than a fitted range: a continuously rescaling axis
+  // hides the very movement the page is about, because the boundary
+  // would sit at the same pixel no matter what you did to the sliders.
+  // The rungs have a dead band between them so the axis cannot flicker
+  // back and forth during a drag.
+  var XMAX = 1.6;
+  function updateXmax(wbar){
+    if (wbar > 1.30) XMAX = 2.6;
+    else if (wbar < 1.20) XMAX = 1.6;
+  }
+  var PMAX = 1.8;
 
-    var pill = document.getElementById("pill"), vsum = document.getElementById("vsum");
-    if (dead > 55){
-      pill.className = "pill dead";
-      pill.textContent = "most firms like this never pay a dividend";
-      vsum.innerHTML = "Out of 400 firms with these characteristics, <b>" + Math.round(dead*4) +
-        "</b> are wound up before ever reaching the ceiling. A cross-section of this industry " +
-        "would show mostly non-payers — and <i>not</i> because of taxes or clienteles. They " +
-        "simply never accumulated enough.";
-    } else if (dead > 45){
-      pill.className = "pill edge";
-      pill.textContent = "roughly a coin flip";
-      vsum.innerHTML = "About half reach a first dividend and about half do not. This is the " +
-        "knife edge: a small change in volatility or in where the firm starts decides whether " +
-        "the typical firm in this industry is a payer.";
-    } else {
-      pill.className = "pill live";
-      pill.textContent = "most firms like this get there";
-      vsum.innerHTML = "Most of these firms reach the ceiling and start paying. Note what did " +
-        "the work: not profitability — the drift is unchanged — but <b>distance from the floor</b>.";
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+  // ---- FIGURE 1: the value function ------------------------------
+  function drawVF(st, con){
+    var W = 640, H = 316, L = 50, R2 = 126, T = 20, B = 34;
+    function X(w){ return L + (w / XMAX) * (W - L - R2); }
+    function Y(p){ return H - B - (p / PMAX) * (H - T - B); }
+    var c = svgColors(), o = [], k;
+
+    // axes
+    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+X(XMAX)+'" y2="'+Y(0)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+L+'" y2="'+Y(PMAX)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    [0, 0.5, 1.5].forEach(function(g){
+      o.push('<text x="'+(L-7)+'" y="'+(Y(g)+4)+'" fill="'+c.GREY+
+             '" font-size="11" text-anchor="end">'+g.toFixed(1)+'</text>');
+    });
+
+    // the first-best value: the benchmark, so it is blue, as in the deck
+    o.push('<line x1="'+L+'" y1="'+Y(Q_FB)+'" x2="'+X(XMAX)+'" y2="'+Y(Q_FB)+
+           '" stroke="'+c.BLUE+'" stroke-width="1.2" stroke-dasharray="5 4"/>');
+    o.push('<text x="'+(X(XMAX)+7)+'" y="'+(Y(Q_FB)+4)+'" fill="'+c.BLUE+
+           '" font-size="11.5">first best 1.72</text>');
+
+    // the cost of capital: the financeability test
+    o.push('<line x1="'+L+'" y1="'+Y(1)+'" x2="'+X(XMAX)+'" y2="'+Y(1)+
+           '" stroke="'+c.GREY+'" stroke-width="1.2" stroke-dasharray="2 3"/>');
+    o.push('<text x="'+(X(XMAX)+7)+'" y="'+(Y(1)+4)+'" fill="'+c.GREY+
+           '" font-size="11.5">cost of capital</text>');
+
+    // the boundary
+    var xb = X(Math.min(con.wbar, XMAX));
+    o.push('<line x1="'+xb.toFixed(1)+'" y1="'+Y(0)+'" x2="'+xb.toFixed(1)+'" y2="'+Y(PMAX)+
+           '" stroke="'+c.GREY+'" stroke-width="1.3" stroke-dasharray="6 4"/>');
+    // The boundary label goes at the FOOT of its line, not the head. At the
+    // head it sat in the same row as the y-axis title and, whenever the
+    // boundary was small, on top of the "starts at" label as well — three
+    // labels fighting over the top-left corner. The foot of the line is
+    // empty at every setting: the value function meets the boundary well
+    // above the axis. It flips side once the line passes mid-plot.
+    var payEnd = xb > (L + X(XMAX)) / 2;
+    o.push('<text x="'+(xb + (payEnd ? -6 : 6)).toFixed(1)+'" y="'+(Y(0)-9)+
+           '" fill="'+c.GREY+'" font-size="11.5" text-anchor="'+(payEnd ? "end" : "start")+
+           '">pay out at '+num(con.wbar)+'</text>');
+
+    // the value function itself
+    var d = "";
+    for (k = 0; k <= con.N; k += 4){
+      d += (k ? "L" : "M") + X(con.w[k]).toFixed(1) + " " + Y(con.p[k]).toFixed(1) + " ";
+    }
+    d += "L" + X(con.w[con.N]).toFixed(1) + " " + Y(con.p[con.N]).toFixed(1);
+    o.push('<path d="'+d+'" fill="none" stroke="'+c.RED+'" stroke-width="2"/>');
+
+    // Beyond the boundary the contract pays out, so value falls one for
+    // one: the straight piece IS the slope -1 condition. Drawn, never
+    // labelled — every candidate label position collided with either the
+    // cost-of-capital line or the boundary text, so the caption names it.
+    var wEnd = Math.min(con.wbar + 0.22 * XMAX, XMAX);
+    o.push('<line x1="'+xb.toFixed(1)+'" y1="'+Y(con.p[con.N]).toFixed(1)+
+           '" x2="'+X(wEnd).toFixed(1)+'" y2="'+Y(con.p[con.N] - (wEnd - con.wbar)).toFixed(1)+
+           '" stroke="'+c.RED+'" stroke-width="2" opacity="0.45"/>');
+
+    // where the contract starts him — computed, not chosen
+    if (!con.degenerate){
+      var x0 = X(con.w0), y0 = Y(con.p0);
+      o.push('<line x1="'+x0.toFixed(1)+'" y1="'+y0.toFixed(1)+'" x2="'+x0.toFixed(1)+
+             '" y2="'+Y(0)+'" stroke="'+c.INK+'" stroke-width="0.9" stroke-dasharray="3 3" opacity="0.55"/>');
+      o.push('<circle cx="'+x0.toFixed(1)+'" cy="'+y0.toFixed(1)+'" r="4.3" fill="'+c.INK+'"/>');
+      // Centred above the dot everywhere except near the left edge, where a
+      // centred box reaches back over the y-axis and lands on the "1.5" tick
+      // and the axis title. There it hangs to the RIGHT of the dot instead —
+      // which is empty, because the curve is still climbing at that point.
+      var leftish = x0 < L + 90;
+      o.push('<text x="'+(leftish ? x0 + 9 : x0).toFixed(1)+'" y="'+(y0 - 11).toFixed(1)+
+             '" fill="'+c.INK+'" font-size="11.5" text-anchor="'+
+             (leftish ? "start" : "middle")+'">starts at '+num(con.w0)+'</text>');
     }
 
-    var med = sim.medFirst;
-    document.getElementById("r1").innerHTML = isFinite(med)
-      ? ("Starting at <b>" + num(st.w0) + "</b> of the way to the ceiling, the median firm pays " +
-         "its first dividend after <b>" + num(med, 1) + " years</b>.")
-      : ("Starting at <b>" + num(st.w0) + "</b> of the way to the ceiling, <b>the median firm " +
-         "never pays a dividend at all</b> — fewer than half reach the ceiling inside thirty years.");
+    o.push('<text x="'+X(XMAX)+'" y="'+(H-4)+'" fill="'+c.GREY+
+           '" font-size="12" text-anchor="end">the manager’s stake w, per euro of capital</text>');
+    o.push('<text x="'+(L-7)+'" y="'+(T-6)+'" fill="'+c.GREY+
+           '" font-size="11.5" text-anchor="start">p(w)</text>');
 
-    document.getElementById("r2").innerHTML =
-      "<b>" + pct(sim.sharePaid * 100) + "</b> pay at least one dividend within 30 years; <b>" +
-      pct(dead) + "</b> are liquidated before they ever do.";
-
-    document.getElementById("cap").innerHTML =
-      "Three of the 400 simulated firms. The <b>floor</b> is liquidation, the <b>ceiling</b> is " +
-      "a dividend — when a path touches it, cash is paid out and the stake steps back down.";
+    document.getElementById("vf").innerHTML = o.join("");
   }
 
-  function draw(st, sim){
-    var W = 640, H = 330, L = 46, R = 24, T = 22, B = 34;
-    function X(t){ return L + (t / YEARS) * (W - L - R); }
-    function Y(w){ return H - B - w * (H - T - B); }
+  // ---- FIGURE 2: q wedge on top, investment underneath -----------
+  function drawQ(st, con){
+    var W = 640, H = 400, L = 50, R2 = 126;
+    var T1 = 18,  B1 = 216;            // top region: the two q curves
+    var T2 = 252, B2 = 366;            // bottom region: investment
+    function X(w){ return L + (w / XMAX) * (W - L - R2); }
+    function Y1(q){ return B1 - (q / PMAX) * (B1 - T1); }
+    var IMIN = -0.18, IMAX = 0.15;
+    function Y2(i){ return B2 - ((i - IMIN) / (IMAX - IMIN)) * (B2 - T2); }
+    var c = svgColors(), o = [], k;
+    var xb = X(Math.min(con.wbar, XMAX));
 
-    var css = getComputedStyle(document.documentElement);
-    var RED  = css.getPropertyValue("--rugred").trim()  || "#C1002A";
-    var BLUE = css.getPropertyValue("--rugblue").trim() || "#1F6FB2";
-    var GREY = css.getPropertyValue("--ruggrey").trim() || "#8A8A8A";
-
-    var o = [];
-    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+X(YEARS)+'" y2="'+Y(0)+
-           '" stroke="'+BLUE+'" stroke-width="1.6"/>');
-    o.push('<line x1="'+L+'" y1="'+Y(1)+'" x2="'+X(YEARS)+'" y2="'+Y(1)+
-           '" stroke="'+BLUE+'" stroke-width="1.6" stroke-dasharray="6 4"/>');
-    o.push('<text x="'+(L-6)+'" y="'+(Y(1)+4)+'" fill="'+BLUE+'" font-size="12" text-anchor="end">pay out</text>');
-    o.push('<text x="'+(L-6)+'" y="'+(Y(0)+4)+'" fill="'+BLUE+'" font-size="12" text-anchor="end">0</text>');
-    o.push('<text x="'+X(YEARS)+'" y="'+(H-8)+'" fill="'+GREY+'" font-size="12" text-anchor="end">years</text>');
-
-    var shades = ["1", "0.55", "0.3"];
-    sim.traces.forEach(function(tr, i){
-      var d = tr.pts.map(function(p, k){ return (k ? "L" : "M") + X(p[0]) + " " + Y(p[1]); }).join(" ");
-      o.push('<path d="'+d+'" fill="none" stroke="'+RED+'" stroke-width="1.6" opacity="'+shades[i]+'"/>');
-      var end = tr.pts[tr.pts.length - 1];
-      if (!tr.alive){
-        o.push('<circle cx="'+X(end[0])+'" cy="'+Y(0)+'" r="4.5" fill="'+RED+'" opacity="'+shades[i]+'"/>');
-      }
+    // ---------- top: average q and marginal q ----------
+    o.push('<line x1="'+L+'" y1="'+Y1(0)+'" x2="'+X(XMAX)+'" y2="'+Y1(0)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    o.push('<line x1="'+L+'" y1="'+Y1(0)+'" x2="'+L+'" y2="'+Y1(PMAX)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    [0, 0.5, 1.0, 1.5].forEach(function(g){
+      o.push('<text x="'+(L-7)+'" y="'+(Y1(g)+4)+'" fill="'+c.GREY+
+             '" font-size="11" text-anchor="end">'+g.toFixed(1)+'</text>');
     });
+    o.push('<line x1="'+L+'" y1="'+Y1(Q_FB)+'" x2="'+X(XMAX)+'" y2="'+Y1(Q_FB)+
+           '" stroke="'+c.BLUE+'" stroke-width="1.2" stroke-dasharray="5 4"/>');
+    o.push('<text x="'+(X(XMAX)+7)+'" y="'+(Y1(Q_FB)+4)+'" fill="'+c.BLUE+
+           '" font-size="11.5">static q 1.72</text>');
+    o.push('<line x1="'+xb.toFixed(1)+'" y1="'+Y1(0)+'" x2="'+xb.toFixed(1)+'" y2="'+Y1(PMAX)+
+           '" stroke="'+c.GREY+'" stroke-width="1.3" stroke-dasharray="6 4"/>');
+
+    // the wedge, shaded: this is w(1+p'), and it closes at both ends
+    var up = "", dn = "";
+    for (k = 0; k <= con.N; k += 4){
+      up += (k ? "L" : "M") + X(con.w[k]).toFixed(1) + " " + Y1(con.qa[k]).toFixed(1) + " ";
+    }
+    for (k = con.N; k >= 0; k -= 4){
+      dn += "L" + X(con.w[k]).toFixed(1) + " " + Y1(con.qm[k]).toFixed(1) + " ";
+    }
+    o.push('<path d="'+up+dn+'Z" fill="'+c.GREY+'" opacity="0.18" stroke="none"/>');
+
+    function curve1(arr, col, wid, dash){
+      var d = "";
+      for (var j = 0; j <= con.N; j += 4){
+        d += (j ? "L" : "M") + X(con.w[j]).toFixed(1) + " " + Y1(arr[j]).toFixed(1) + " ";
+      }
+      o.push('<path d="'+d.trim()+'" fill="none" stroke="'+col+'" stroke-width="'+wid+
+             '"'+(dash ? ' stroke-dasharray="'+dash+'"' : '')+'/>');
+    }
+    curve1(con.qa, c.INK, 1.8, "");
+    curve1(con.qm, c.RED, 2.0, "");
+    // The two curves MEET at the boundary, so labelling them there puts two
+    // labels on one point and pushes them into the right margin, where the
+    // benchmark label already lives. They are named where they are furthest
+    // apart instead — the peak of the wedge, which is also the thing the
+    // panel is about. When the gap is too small to fit two labels between
+    // the curves, that IS the Hayashi case, so it gets said in one label.
+    var xw = Math.max(L + 48, Math.min(X(XMAX) - 48, X(con.w[con.kw])));
+    var ya = Y1(con.qa[con.kw]), ym = Y1(con.qm[con.kw]);
+    if (ym - ya >= 34){
+      o.push('<text x="'+xw.toFixed(1)+'" y="'+(ya - 7).toFixed(1)+
+             '" fill="'+c.INK+'" font-size="11.5" text-anchor="middle">average q</text>');
+      o.push('<text x="'+xw.toFixed(1)+'" y="'+(ym + 16).toFixed(1)+
+             '" fill="'+c.RED+'" font-size="11.5" text-anchor="middle">marginal q</text>');
+    } else {
+      xw = Math.max(L + 78, Math.min(X(XMAX) - 78, xw));
+      o.push('<text x="'+xw.toFixed(1)+'" y="'+(ya - 9).toFixed(1)+'" fill="'+c.GREY+
+             '" font-size="11.5" text-anchor="middle">average q ≈ marginal q</text>');
+    }
+    o.push('<text x="'+(L-7)+'" y="'+(T1-4)+'" fill="'+c.GREY+
+           '" font-size="11.5" text-anchor="start">q</text>');
+
+    // ---------- bottom: investment ----------
+    o.push('<line x1="'+L+'" y1="'+Y2(IMIN)+'" x2="'+X(XMAX)+'" y2="'+Y2(IMIN)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    o.push('<line x1="'+L+'" y1="'+Y2(IMIN)+'" x2="'+L+'" y2="'+Y2(IMAX)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    o.push('<line x1="'+L+'" y1="'+Y2(0)+'" x2="'+X(XMAX)+'" y2="'+Y2(0)+
+           '" stroke="'+c.LINE+'" stroke-width="0.9"/>');
+    [-0.1, 0, 0.1].forEach(function(g){
+      o.push('<text x="'+(L-7)+'" y="'+(Y2(g)+4)+'" fill="'+c.GREY+
+             '" font-size="11" text-anchor="end">'+(g === 0 ? "0" : (g > 0 ? "+" : "−") + Math.abs(g).toFixed(2))+'</text>');
+    });
+    o.push('<line x1="'+L+'" y1="'+Y2(I_FB)+'" x2="'+X(XMAX)+'" y2="'+Y2(I_FB)+
+           '" stroke="'+c.BLUE+'" stroke-width="1.4"/>');
+    o.push('<text x="'+(X(XMAX)+7)+'" y="'+(Y2(I_FB)+4)+'" fill="'+c.BLUE+
+           '" font-size="11.5">static</text>');
+    o.push('<line x1="'+xb.toFixed(1)+'" y1="'+Y2(IMIN)+'" x2="'+xb.toFixed(1)+'" y2="'+Y2(IMAX)+
+           '" stroke="'+c.GREY+'" stroke-width="1.3" stroke-dasharray="6 4"/>');
+    var di = "";
+    for (k = 0; k <= con.N; k += 4){
+      di += (k ? "L" : "M") + X(con.w[k]).toFixed(1) + " " +
+            Y2(Math.max(IMIN, Math.min(IMAX, con.inv[k]))).toFixed(1) + " ";
+    }
+    o.push('<path d="'+di.trim()+'" fill="none" stroke="'+c.RED+'" stroke-width="2"/>');
+    o.push('<text x="'+(L-7)+'" y="'+(T2-6)+'" fill="'+c.GREY+
+           '" font-size="11.5" text-anchor="start">investment rate i(w)</text>');
+    o.push('<text x="'+X(XMAX)+'" y="'+(H-4)+'" fill="'+c.GREY+
+           '" font-size="12" text-anchor="end">the manager’s stake w, per euro of capital</text>');
+
+    // the firm's own position, on both regions
+    if (!con.degenerate){
+      var x0 = X(con.w0);
+      o.push('<circle cx="'+x0.toFixed(1)+'" cy="'+Y1(con.qm[con.k0]).toFixed(1)+
+             '" r="4" fill="'+c.RED+'"/>');
+      o.push('<circle cx="'+x0.toFixed(1)+'" cy="'+Y1(con.qa[con.k0]).toFixed(1)+
+             '" r="4" fill="'+c.INK+'"/>');
+      o.push('<circle cx="'+x0.toFixed(1)+'" cy="'+
+             Y2(Math.max(IMIN, Math.min(IMAX, con.inv[con.k0]))).toFixed(1)+
+             '" r="4" fill="'+c.RED+'"/>');
+    }
+
+    document.getElementById("qfig").innerHTML = o.join("");
+  }
+
+  // ---- FIGURE 3: the cohort --------------------------------------
+  function draw(st, con, sim){
+    // H = 330, not 320: at 320 the "30" tick and the "years from today"
+    // axis label share an x anchor and overlap by 6px. Measured, not guessed.
+    var W = 640, H = 330, L = 46, R2 = 132, T = 18, B = 34;
+    function X(t){ return L + (t / YEARS) * (W - L - R2); }
+    function Y(s){ return H - B - s * (H - T - B); }
+    var c = svgColors(), o = [], k;
+
+    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+X(YEARS)+'" y2="'+Y(0)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+L+'" y2="'+Y(1)+
+           '" stroke="'+c.LINE+'" stroke-width="1.2"/>');
+    [0, 0.25, 0.75, 1].forEach(function(g){
+      o.push('<line x1="'+L+'" y1="'+Y(g)+'" x2="'+X(YEARS)+'" y2="'+Y(g)+
+             '" stroke="'+c.LINE+'" stroke-width="0.8"/>');
+    });
+    o.push('<line x1="'+L+'" y1="'+Y(0.5)+'" x2="'+X(YEARS)+'" y2="'+Y(0.5)+
+           '" stroke="'+c.GREY+'" stroke-width="1.3" stroke-dasharray="6 4"/>');
+    [[0,"0%",0],[0.5,"50%",1],[1,"100%",0]].forEach(function(g){
+      o.push('<text x="'+(L-7)+'" y="'+(Y(g[0])+4)+'" fill="'+c.GREY+
+             '" font-size="11.5" text-anchor="end"'+(g[2]?' font-weight="600"':'')+'>'+g[1]+'</text>');
+    });
+    [0, 10, 20, 30].forEach(function(yr){
+      o.push('<line x1="'+X(yr).toFixed(1)+'" y1="'+Y(0)+'" x2="'+X(yr).toFixed(1)+'" y2="'+(Y(0)+4)+
+             '" stroke="'+c.LINE+'" stroke-width="1"/>');
+      o.push('<text x="'+X(yr).toFixed(1)+'" y="'+(Y(0)+17)+'" fill="'+c.GREY+
+             '" font-size="11" text-anchor="middle">'+yr+'</text>');
+    });
+    // Centred under the axis, not right-anchored at its tip: right-anchored
+    // it shares an x with the "30" tick and overlapped it by 6px. Centred,
+    // it sits in the gap between the 10 and 20 ticks with 24px either side.
+    o.push('<text x="'+((L + X(YEARS)) / 2).toFixed(1)+'" y="'+(H-4)+'" fill="'+c.GREY+
+           '" font-size="12" text-anchor="middle">years from today</text>');
+
+    function curve(arr, col, wid){
+      var d = "";
+      for (var j = 0; j <= NSTEP; j++){
+        d += (j ? "L" : "M") + X(j * DT).toFixed(1) + " " + Y(arr[j]).toFixed(1) + " ";
+      }
+      o.push('<path d="'+d.trim()+'" fill="none" stroke="'+col+'" stroke-width="'+wid+'"/>');
+    }
+    var cumWait = new Float64Array(NSTEP + 1);
+    for (k = 0; k <= NSTEP; k++){ cumWait[k] = 1 - sim.cumPay[k] - sim.cumLiq[k]; }
+    curve(cumWait, c.GREY, 1.3);
+    curve(sim.cumPay, c.BLUE, 1.9);
+    curve(sim.cumLiq, c.RED, 1.9);
+
+    if (isFinite(sim.medFirst)){
+      var xm = X(sim.medFirst);
+      o.push('<line x1="'+xm.toFixed(1)+'" y1="'+Y(0)+'" x2="'+xm.toFixed(1)+'" y2="'+Y(0.5)+
+             '" stroke="'+c.BLUE+'" stroke-width="1" stroke-dasharray="3 3"/>');
+      o.push('<circle cx="'+xm.toFixed(1)+'" cy="'+Y(0.5)+'" r="3.6" fill="'+c.BLUE+'"/>');
+      var anchor = (xm > X(YEARS) - 90) ? "end" : "start";
+      o.push('<text x="'+(xm + (anchor === "end" ? -6 : 6)).toFixed(1)+'" y="'+(Y(0)-7)+
+             '" fill="'+c.BLUE+'" font-size="11.5" text-anchor="'+anchor+
+             '">median '+num(sim.medFirst,1)+'y</text>');
+    }
+
+    var xr = X(YEARS) + 8;
+    var labs = [
+      { y: Y(sim.cumPay[NSTEP]), col: c.BLUE, txt: "first dividend "   + pct(sim.sharePaid * 100) },
+      { y: Y(sim.cumLiq[NSTEP]), col: c.RED,  txt: "liquidated first " + pct(sim.shareDied * 100) },
+      { y: Y(cumWait[NSTEP]),    col: c.GREY, txt: "still waiting "    + pct(sim.shareWait * 100) }
+    ];
+    // Separating the stack downward and then sliding the whole thing up to
+    // fit pushed the top label off the canvas whenever one curve sat near
+    // 100% and the other two near 0 — the cohort that almost all pays. So:
+    // clamp each label into the frame first, then open the gaps UPWARD from
+    // the bottom, which cannot push anything past the top with three labels
+    // in 278px. 17px, not 15: the boxes are ~15px tall, so a 15px pitch
+    // leaves them touching.
+    labs.sort(function(a, b){ return a.y - b.y; });
+    labs.forEach(function(L2){ L2.y = Math.max(T + 6, Math.min(H - B, L2.y)); });
+    for (k = labs.length - 2; k >= 0; k--){
+      if (labs[k+1].y - labs[k].y < 17) labs[k].y = labs[k+1].y - 17;
+    }
+    if (labs[0].y < T + 6){
+      var rise = (T + 6) - labs[0].y;
+      labs.forEach(function(L2){ L2.y += rise; });
+    }
+    labs.forEach(function(L2){
+      o.push('<text x="'+xr+'" y="'+(L2.y+4).toFixed(1)+'" fill="'+L2.col+
+             '" font-size="12">'+L2.txt+'</text>');
+    });
+
     document.getElementById("plot").innerHTML = o.join("");
   }
 
-  var LABEL = { w0:"the starting stake W₀", sig:"cash-flow volatility σ",
-                lam:"the diversion rate λ", gam:"the drift γ" };
+  // ---- FIGURE 4: three paths between the solved boundaries --------
+  function drawPaths(st, con, sim){
+    // T = 24, not 14: the ceiling sits exactly at T, and the "pay out"
+    // label rides 5px above it, so at T = 14 its box ran off the top of
+    // the viewBox by 3.4px. That defect was in the previous version too.
+    var W = 640, H = 158, L = 52, R2 = 24, T = 24, B = 26;
+    function X(t){ return L + (t / YEARS) * (W - L - R2); }
+    function Y(w){ return H - B - (w / con.wbar) * (H - T - B); }
+    var c = svgColors(), o = [];
 
-  function ticker(st, sim){
-    var t = document.getElementById("ticker");
-    if (!last){ t.className = "ticker flat"; t.textContent = "Move a slider."; return; }
-    var dead = sim.shareDied * 100, cls, msg;
-    if (last === "w0"){
-      cls = st.w0 > 0.5 ? "up" : "down";
-      msg = "You moved <b class='mv'>" + LABEL.w0 + "</b> to <b class='mv'>" + num(st.w0) +
-            "</b> — and <b class='mv'>" + pct(dead) + "</b> now die before paying. " +
-            "That is a comparative static, and it is the whole model: <b>the same firm, " +
-            "at a different point of its own contract</b>.";
-    } else if (last === "sig"){
-      cls = "down";
-      msg = "You moved <b class='mv'>" + LABEL.sig + "</b> to <b class='mv'>" + num(st.sig) +
-            "</b>. The path is wilder, so the floor is reached sooner — <b class='mv'>" +
-            pct(dead) + "</b> never pay. Note the firm is no less profitable; only noisier.";
-    } else if (last === "lam"){
-      cls = "down";
-      msg = "You moved <b class='mv'>" + LABEL.lam + "</b> to <b class='mv'>" + num(st.lam) +
-            "</b>. His stake must now move <b>" + num(st.lam) + "</b> per unit of cash flow to " +
-            "keep him honest — so the agency problem, not the business, is what made the path wild.";
+    o.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+X(YEARS)+'" y2="'+Y(0)+
+           '" stroke="'+c.GREY+'" stroke-width="1.4"/>');
+    o.push('<line x1="'+L+'" y1="'+Y(con.wbar)+'" x2="'+X(YEARS)+'" y2="'+Y(con.wbar)+
+           '" stroke="'+c.GREY+'" stroke-width="1.4" stroke-dasharray="6 4"/>');
+    o.push('<text x="'+(L-7)+'" y="'+(Y(con.wbar)+4)+'" fill="'+c.GREY+
+           '" font-size="11" text-anchor="end">'+num(con.wbar)+'</text>');
+    o.push('<text x="'+(L-7)+'" y="'+(Y(0)+4)+'" fill="'+c.GREY+
+           '" font-size="11" text-anchor="end">0</text>');
+    o.push('<text x="'+X(YEARS)+'" y="'+(Y(con.wbar)-5)+'" fill="'+c.GREY+
+           '" font-size="11.5" text-anchor="end">pay out</text>');
+    o.push('<text x="'+X(YEARS)+'" y="'+(Y(0)-6)+'" fill="'+c.GREY+
+           '" font-size="11.5" text-anchor="end">liquidation</text>');
+    [0, 10, 20, 30].forEach(function(yr){
+      o.push('<text x="'+X(yr).toFixed(1)+'" y="'+(Y(0)+15)+'" fill="'+c.GREY+
+             '" font-size="10.5" text-anchor="middle">'+yr+'</text>');
+    });
+
+    var shades = ["1", "0.6", "0.35"];
+    sim.traces.forEach(function(tr, i){
+      var col = (tr.kind === "pay") ? c.BLUE : (tr.kind === "liq") ? c.RED : c.GREY;
+      var d = tr.pts.map(function(p, k){
+        return (k ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1);
+      }).join(" ");
+      o.push('<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.5" opacity="'+shades[i]+'"/>');
+      var end = tr.pts[tr.pts.length - 1];
+      if (tr.kind){
+        o.push('<circle cx="'+X(end[0]).toFixed(1)+'" cy="'+Y(end[1]).toFixed(1)+
+               '" r="4" fill="'+col+'" opacity="'+shades[i]+'"/>');
+      }
+    });
+    document.getElementById("paths").innerHTML = o.join("");
+  }
+
+  // ================================================================
+  // COPY
+  // ================================================================
+  function paint(st, con, sim){
+    document.getElementById("sig-v").textContent = st.sig.toFixed(2);
+    document.getElementById("lam-v").textContent = st.lam.toFixed(2);
+    document.getElementById("gam-v").textContent = st.gam.toFixed(3);
+    document.getElementById("ell-v").textContent = st.ell.toFixed(2);
+    document.getElementById("rho-hint").innerHTML =
+      "Investors discount at r = 5%. The wedge &rho; = <b>" + num(st.gam - R, 3) +
+      "</b> is burnt every period his stake is carried &mdash; which is the only reason " +
+      "there is a ceiling at all.";
+
+    document.getElementById("cmp").innerHTML =
+      "payout boundary w&#772; = <span style='color:var(--rugred)'>" + num(con.wbar) + "</span>";
+
+    var pill = document.getElementById("pill"), vsum = document.getElementById("vsum");
+
+    if (con.degenerate){
+      pill.className = "pill dead";
+      pill.textContent = "the contract is not worth writing";
+      vsum.innerHTML = "At these frictions the investors do better winding the firm up than " +
+        "starting it: every euro of promised stake costs more than it buys. The boundary below " +
+        "is still the solution to the equation, but no firm would be launched to run up against it.";
+    } else if (!con.financed){
+      pill.className = "pill dead";
+      pill.textContent = "positive NPV — and it cannot be financed";
+      vsum.innerHTML = "A euro of capital is worth <b>" + num(con.p0) + "</b> to outside " +
+        "investors, against a cost of <b>1.00</b>. The project itself is unchanged and still has " +
+        "positive NPV under the static benchmark (<b>" + num(Q_FB) + "</b>) — what fails is " +
+        "the <em>contract</em>. This is DeMarzo and Sannikov's own case: a good project that the " +
+        "incentive constraints will not let anyone fund.";
     } else {
-      cls = "up";
-      msg = "You moved <b class='mv'>" + LABEL.gam + "</b> to <b class='mv'>" + num(st.gam,3) +
-            "</b>, so the stake climbs faster and the median first dividend arrives after <b class='mv'>" +
-            (isFinite(sim.medFirst) ? num(sim.medFirst,1) + " years" : "never") + "</b>.";
+      pill.className = "pill live";
+      pill.textContent = "financed — but the friction takes its cut";
+      vsum.innerHTML = "A euro of capital is worth <b>" + num(con.p0) + "</b> to outside " +
+        "investors against a cost of <b>1.00</b>, so the firm gets funded. Including the " +
+        "manager's own stake it is worth <b>" + num(con.firmValue) + "</b> — " +
+        "<b>" + pct(con.firmValue / Q_FB * 100, 0) + "</b> of what the same assets would be worth " +
+        "with no agency problem at all.";
     }
-    t.className = "ticker " + cls; t.innerHTML = msg;
+
+    // ---- the three readings ----
+    document.getElementById("r1").innerHTML =
+      "He may build a claim worth <b>" + num(con.wbar) + "</b> per euro of capital before " +
+      "anything is paid out, and the contract starts him at <b>" + num(con.w0) + "</b> — " +
+      (con.degenerate
+        ? "which is the floor itself."
+        : "<b>" + pct(con.w0 / con.wbar * 100, 0) + "</b> of the way up.");
+
+    document.getElementById("r2").innerHTML =
+      "His buffer is <b>" + num(con.wbar) + "</b>. The credit line that implements it is " +
+      "<b>" + num(con.creditLine) + "</b> per euro of capital. Raise &lambda; and the first " +
+      "number goes <em>up</em> while the second goes <em>down</em>.";
+
+    document.getElementById("r3").innerHTML = con.degenerate
+      ? "With no interior starting point there is no firm to measure."
+      : ("At this firm's slack, average q reads <b>" + num(con.qa[con.k0]) + "</b> but the number " +
+         "that drives investment is <b>" + num(con.qm[con.k0]) + "</b> — an overstatement of " +
+         "<b>" + pct(con.gapShare * 100, 0) + "</b>. It invests <b>" + num(con.inv[con.k0], 3) +
+         "</b> against a static benchmark of <b>" + num(I_FB, 3) + "</b>.");
+
+    // ---- the cohort ----
+    var med = sim.medFirst;
+    document.getElementById("r4").innerHTML = isFinite(med)
+      ? ("The median firm on this contract reaches the payout boundary after <b>" +
+         num(med, 1) + " years</b>. Payout is not a ratio it picks — it is a date it " +
+         "arrives at.")
+      : ("The median firm on this contract has <b>not</b> reached a first dividend by year 30. " +
+         "At most half the cohort gets there inside the simulated horizon.");
+
+    document.getElementById("r5").innerHTML =
+      "Within 30 years: <b>" + pct(sim.sharePaid * 100) + "</b> reach a first dividend · <b>" +
+      pct(sim.shareDied * 100) + "</b> are liquidated before one · <b>" +
+      pct(sim.shareWait * 100) + "</b> are still waiting.";
+
+    // ---- captions ----
+    document.getElementById("cap-vf").innerHTML =
+      "What a euro of capital is worth to outside investors, against how much the manager has " +
+      "accumulated. The curve <em>rises</em> at first — giving him a stake moves the firm " +
+      "away from liquidation — then falls, because carrying his stake burns the impatience " +
+      "wedge. The faded straight piece past the boundary has slope &minus;1: at the ceiling a " +
+      "euro held inside is worth exactly a euro paid out, which is why the contract stops there.";
+
+    document.getElementById("cap-q").innerHTML =
+      "Top: the shaded area is the measurement error <code>w(1+p&prime;)</code> in using average " +
+      "q for marginal q. It closes at the payout boundary, where <code>p&prime; = &minus;1</code>. " +
+      "Bottom: the same solution read as investment. The blue line is Hayashi — slack " +
+      "irrelevant, investment flat — and the red curve is what the contract actually does.";
+
+    document.getElementById("cap").innerHTML =
+      "All " + NPATH_TXT + " simulated firms, by <b>first</b> event: paid, liquidated before " +
+      "paying, or still between the boundaries. The three curves add to 100% at every date, and " +
+      "where the blue curve crosses the 50% line is the median first dividend.";
+
+    document.getElementById("cap2").innerHTML =
+      "Three example paths between the solved boundaries, each stopped at its first event and " +
+      "coloured to match the curves above. They illustrate the two boundaries; they are " +
+      "<em>not</em> where the percentages come from.";
+  }
+
+  var LABEL = { sig:"cash-flow volatility σ", lam:"the divertible share λ",
+                gam:"his discount rate γ", ell:"the liquidation value ℓ" };
+
+  // The ticker states a DIRECTION, and it takes it from the two solves
+  // rather than from a hard-coded sign. Anything asserted here is a
+  // comparison of the previous solution with the current one.
+  function ticker(st, con){
+    var t = document.getElementById("ticker");
+    if (!last || prev === null || !prevSol || st[last] === prev){
+      t.className = "ticker flat";
+      t.textContent = "Move one slider to see the comparative static.";
+      return;
+    }
+    var up = st[last] > prev;
+    var verb = up ? "raised" : "lowered";
+    var dWbar = con.wbar - prevSol.wbar;
+    var dCL   = con.creditLine - prevSol.creditLine;
+    var moved = Math.abs(dWbar) > 5e-4;
+    var dir   = dWbar > 0 ? "further away" : "closer";
+    var cls   = dWbar > 0 ? "up" : "down";
+
+    var head = "You " + verb + " <b class='mv'>" + LABEL[last] + "</b> to <b class='mv'>" +
+               num(st[last], last === "gam" ? 3 : 2) + "</b>. ";
+
+    var body;
+    if (!moved){
+      cls = "flat";
+      body = "The boundary did not move.";
+    } else if (last === "lam"){
+      // the one case where the two measures of slack disagree, so the
+      // ticker says both numbers rather than one
+      body = "His buffer moved to <b class='mv'>" + num(con.wbar) + "</b> (" +
+             (dWbar > 0 ? "up" : "down") + " from " + num(prevSol.wbar) + "), but the credit " +
+             "line went to <b class='mv'>" + num(con.creditLine) + "</b> (" +
+             (dCL > 0 ? "up" : "down") + " from " + num(prevSol.creditLine) + "). " +
+             "&sigma; has not moved: the business is no riskier, only harder to watch.";
+      cls = dCL > 0 ? "up" : "down";
+    } else if (last === "sig"){
+      body = "The boundary moved " + dir + ", to <b class='mv'>" + num(con.wbar) +
+             "</b>. The drift of his stake is untouched — the firm is no less profitable, " +
+             "only " + (up ? "noisier" : "steadier") + " — and the contract answers by " +
+             "letting him accumulate " + (dWbar > 0 ? "more" : "less") + " before it pays out.";
+    } else if (last === "gam"){
+      body = "The ceiling came " + (dWbar > 0 ? "up" : "down") + " to <b class='mv'>" +
+             num(con.wbar) + "</b>. Deferring his pay now costs <b class='mv'>" +
+             num(st.gam - R, 3) + "</b> a year, so the contract stops deferring " +
+             (dWbar > 0 ? "later" : "sooner") + ".";
+    } else {
+      body = "The ceiling moved to <b class='mv'>" + num(con.wbar) + "</b> and the contract now " +
+             "starts him at <b class='mv'>" + num(con.w0) + "</b> (was " + num(prevSol.w0) +
+             "). With " + (up ? "more" : "less") + " to salvage, liquidation is " +
+             (up ? "less" : "more") + " painful — so " + (up ? "less" : "more") +
+             " slack is worth carrying.";
+    }
+
+    var fin = con.financed
+      ? ""
+      : " <b>And it is no longer financeable.</b>";
+    t.className = "ticker " + cls;
+    t.innerHTML = head + body + fin;
   }
 
   function all(){
-    var st = state(), sim = simulate(st);
-    paint(st, sim); draw(st, sim); ticker(st, sim);
+    var st = state();
+    var con = contract(st);
+    if (!con){                       // should not happen inside the slider ranges
+      document.getElementById("cmp").textContent = "no solution at these parameters";
+      return;
+    }
+    updateXmax(con.wbar);
+    var sim = (con.degenerate || con.wbar <= 0)
+      ? { medFirst: Infinity, shareDied: 1, sharePaid: 0, shareWait: 0,
+          cumPay: new Float64Array(NSTEP+1), cumLiq: new Float64Array(NSTEP+1).fill(1),
+          traces: [] }
+      : simulate(st, con);
+    paint(st, con, sim);
+    drawVF(st, con);
+    drawQ(st, con);
+    draw(st, con, sim);
+    drawPaths(st, con, sim);
+    ticker(st, con);
+    prevSol = { wbar: con.wbar, creditLine: con.creditLine, w0: con.w0,
+                gapShare: con.gapShare, financed: con.financed };
   }
 
+  var lastVal = {};
+  ids.forEach(function(k){ lastVal[k] = parseFloat(el[k].value); });
   ids.forEach(function(k){
-    el[k].addEventListener("input", function(){ last = k; all(); });
+    el[k].addEventListener("input", function(){
+      prev = lastVal[k];
+      last = k;
+      all();
+      lastVal[k] = parseFloat(el[k].value);
+    });
   });
 
   var PRESETS = {
-    mature: { w0:0.80, sig:0.25, lam:1.00, gam:0.08 },
-    young:  { w0:0.20, sig:0.40, lam:1.00, gam:0.08 },
-    opaque: { w0:0.50, sig:0.30, lam:1.00, gam:0.08 },
-    never:  { w0:0.15, sig:0.75, lam:1.00, gam:0.04 }
+    base:      { sig:0.25, lam:0.40, gam:0.070, ell:0.60 },
+    clear:     { sig:0.25, lam:0.15, gam:0.070, ell:0.60 },
+    opaque:    { sig:0.25, lam:0.65, gam:0.070, ell:0.60 },
+    volatile:  { sig:0.40, lam:0.40, gam:0.070, ell:0.60 },
+    impatient: { sig:0.25, lam:0.40, gam:0.150, ell:0.60 },
+    hayashi:   { sig:0.08, lam:0.12, gam:0.060, ell:0.60 }
   };
   Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function(b){
     b.addEventListener("click", function(){
       var p = PRESETS[b.getAttribute("data-preset")];
-      el.w0.value = p.w0; el.sig.value = p.sig; el.lam.value = p.lam; el.gam.value = p.gam;
-      last = null; all();
+      el.sig.value = p.sig; el.lam.value = p.lam; el.gam.value = p.gam; el.ell.value = p.ell;
+      ids.forEach(function(k){ lastVal[k] = parseFloat(el[k].value); });
+      last = null; prev = null; all();
       var t = document.getElementById("ticker");
       t.className = "ticker flat";
-      t.innerHTML = "Preset loaded. Now move one slider and watch one number move.";
+      t.innerHTML = "Preset loaded. Now move one slider and watch the boundary move.";
     });
   });
 

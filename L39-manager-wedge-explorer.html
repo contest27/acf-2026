@@ -168,7 +168,7 @@
       <div class="row">
         <span class="lbl">β — his stake <small>the board's <em>choice</em>, not a parameter</small></span>
         <output id="o_b">0.10</output>
-        <input type="range" id="b" min="0" max="50" step="1" value="10" aria-label="manager stake, percent">
+        <input type="range" id="b" min="0" max="50" step="1" value="15" aria-label="manager stake, percent">
       </div>
     </div>
     <div class="presets">
@@ -368,11 +368,13 @@
       cap = "G is negative, so shareholders would reject — yet his curve is <b>above zero</b>, because the vega term ν·Δσ² = <b>"+
             f(s.nu*s.v,2)+"</b> pays him for the variance. This is the <b>overshoot</b>.";
     } else if(s.shTake){
+      // Per percentage point of beta, matching the card below — the reader
+      // should never have to translate a derivative into the exam's units.
       var where = Math.abs(s.d_b)<1e-9
-        ? "sits exactly at the <b>peak</b> of his curve: ∂CE/∂β = 0, so the next slice of equity buys nothing at all"
+        ? "sits exactly at the <b>peak</b> of his curve, where the next point of equity buys nothing at all"
         : (s.d_b>0
             ? "is on the <b>rising</b> part of his curve, so the stake is doing what the board intends"
-            : "is <b>past the peak</b>: ∂CE/∂β = "+f(s.d_b,2)+", so more equity now <em>reduces</em> his appetite");
+            : "is <b>past the peak</b>: one more point of equity now <em>cuts</em> his appetite by <b>"+f(-s.d_b*0.01,2)+"</b>");
       cap = "He takes the project, and at β = "+s.b.toFixed(2)+" he "+where+
             ". He would still accept up to β = <b>"+s.bmax.toFixed(3)+"</b>.";
     } else {
@@ -393,10 +395,14 @@
     var Y=function(t){ return T+(1-(t-lo)/(hi-lo))*(H-T-B); };
     var g=[];
 
-    // zero line = the shareholders' rule, drawn as the benchmark
+    // Zero line = the MANAGER's cutoff. This axis is his certainty equivalent,
+    // so CE = 0 is where he is indifferent. The shareholders' rule is G >= 0,
+    // a property of the project, and it cannot be a horizontal line in
+    // CE-against-beta space — labelling it as such put their decision on his
+    // payoff axis. Their verdict lives in the chip instead.
     g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+
            '" stroke="var(--rugblue)" stroke-width="2"/>');
-    g.push('<text x="'+(W-R+8)+'" y="'+(Y(0)+4)+'" fill="var(--rugblue)" font-size="12.5">shareholders: take iff G ≥ 0</text>');
+    g.push('<text x="'+(W-R+8)+'" y="'+(Y(0)+4)+'" fill="var(--rugblue)" font-size="12.5">he takes it iff CE ≥ 0</text>');
     // axes
     g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.5"/>');
     g.push('<text x="'+L+'" y="'+(T-8)+'" fill="var(--muted)" font-size="12">his certainty equivalent CE(β)</text>');
@@ -438,7 +444,7 @@
       g.push('<text x="'+(X(s.bmax)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="12">he stops here</text>');
     }
     plot.innerHTML='<title id="plotTitle">The manager\'s certainty equivalent against his stake</title>'+
-      '<desc id="plotDesc">A concave curve of CE against beta; the shaded region below the blue zero line is where he refuses a project the shareholders want.</desc>'+g.join("");
+      '<desc id="plotDesc">A concave curve of CE against beta; the shaded region below the blue line at CE equals zero is where he refuses the project. When G is at least zero the shareholders want it, and that refusal is the wedge.</desc>'+g.join("");
   }
 
   function render(){ var s=state(); paint(s); draw(s); ticker(s); }

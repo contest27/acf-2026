@@ -135,8 +135,9 @@
 <p class="lead">
   The firm funds investment from its own net worth plus borrowing, <code>I = w + b</code>, and a lender
   will advance at most <code>b ≤ λw</code>. So <b><code>I = min{ I*, (1+λ)w }</code></b>, with the constraint
-  binding below <code>w* = I*/(1+λ)</code>. The frictionless benchmark says <code>∂I/∂w = 0</code> —
-  <em>exactly zero</em>, the balance sheet is irrelevant. Move the sliders and watch what replaces it.
+  binding below <code>w* = I*/(1+λ)</code>. In the frictionless benchmark an extra euro of net worth
+  buys <em>no</em> extra investment at all — the balance sheet is irrelevant. Move the sliders and
+  watch what replaces it.
 </p>
 
 <h2 class="sr-only">Interactive explorer: adjust net worth, the collateral parameter, the first-best investment level, a net-worth shock and the strength of the asset-price feedback, to see investment, the amplification of the shock, and how investment responds when each is nudged.</h2>
@@ -148,7 +149,7 @@
     <div class="row">
       <span class="lbl">w — net worth<small>what the firm actually owns</small></span>
       <output id="o_w">100</output>
-      <input type="range" id="w" min="10" max="300" step="5" value="100" aria-label="net worth">
+      <input type="range" id="w" min="10" max="300" step="5" value="80" aria-label="net worth">
     </div>
     <div class="row">
       <span class="lbl">λ — collateral parameter<small>euro borrowed per euro owned</small></span>
@@ -185,7 +186,8 @@
       <div class="cmp"><span id="c_i">I = 200</span> &nbsp;→&nbsp; <span id="c_i2">160</span></div>
       <div class="pill edge" id="pill">exactly at the threshold</div>
       <div class="vsum">
-        threshold w* = <b id="v_ws">100.0</b> &nbsp;·&nbsp; sensitivity ∂I/∂w = <b id="v_di">0</b><br>
+        threshold w* = <b id="v_ws">100.0</b> &nbsp;·&nbsp; one extra euro of net worth carries
+        <b id="v_di">2.00 euro of investment</b><br>
         the shock costs <b id="v_dl">40.0</b> of investment
         &nbsp;·&nbsp; with the loop, <b id="v_tot">40.0</b><br>
         <span id="v_note"></span>
@@ -210,7 +212,9 @@
 <div class="qs">
   <h2>Try to answer</h2>
   <ol>
-    <li>Nudge <b>w</b> just below w*. Why does <code>∂I/∂w</code> jump from 0 to 1+λ rather than rising smoothly?</li>
+    <li>Nudge <b>w</b> just below w*. Why does an extra euro of net worth suddenly carry
+        <code>1+λ</code> euro of investment instead of none, rather than the effect growing in
+        smoothly?</li>
     <li>That jump is a famous objection to a whole literature. Whose, and what does it say about sorting firms into "constrained" and "unconstrained"?</li>
     <li>Raise <b>λ</b> from the lecture case. Investment rises — but so does the amplification. Is better collateral good news?</li>
     <li>Raise <b>φ</b> until the loop stops converging. What is the economy doing at that point, and what would stop it?</li>
@@ -229,7 +233,7 @@
     <div class="card">
       <div class="cardhead"><span>1</span> · A euro of net worth moves more than a euro — or nothing at all</div>
       <div class="cardlive" id="k1">—</div>
-      <div class="cardnote">Not a slope but a <em>step</em>: drag <code>w</code> across <code>w*</code> and it switches. <em>Chaney–Sraer–Thesmar (2012)</em> estimate it off real-estate shocks — about six cents per euro of collateral — and <em>Almeida–Campello (2007)</em> show the sensitivity itself rises with tangibility.</div>
+      <div class="cardnote">The marginal effect is a <em>step</em>, not a slope: drag <code>w</code> across <code>w*</code> and it switches. In the data, <em>Chaney–Sraer–Thesmar (2012)</em> use real-estate shocks and find about six cents of extra investment per euro of extra collateral value — an empirical collateral coefficient, <em>not</em> this slider's <code>1+λ</code> — and <em>Almeida–Campello (2007)</em> show the sensitivity rises with tangibility.</div>
     </div>
     <div class="card">
       <div class="cardhead"><span>2</span> · Aggregated, it can run away</div>
@@ -371,7 +375,14 @@
     else { pill.textContent="unconstrained — back in the benchmark"; pill.className="pill free"; }
 
     document.getElementById("v_ws").textContent=f1(s.ws);
-    document.getElementById("v_di").textContent=s.bind?f2(1+s.lam):"0";
+    // At w = w* the effect is one-sided: 1+lambda from below, nothing from
+    // above. Reporting the upper value alone said "one more euro of net worth
+    // does nothing" at exactly the point where that is only half true, so the
+    // edge case reports both sides. Stated in euros carried, never as dI/dw —
+    // that is how the exam question is phrased.
+    document.getElementById("v_di").textContent =
+      s.edge ? (f2(1+s.lam)+" euro of investment below w*, nothing above it")
+             : (s.bind ? f2(1+s.lam)+" euro of investment" : "nothing");
     document.getElementById("v_dl").textContent=f1(s.dI);
     document.getElementById("v_tot").textContent=s.converges?f1(s.total):"unbounded";
     document.getElementById("v_note").innerHTML =
@@ -438,14 +449,14 @@
       cap = "φ(1+λ) = <b>"+f2(s.phi*(1+s.lam))+"</b>, so every round of the loop destroys more net worth than the last and the series does not converge. "+
             "The model is telling you something real: an accelerator this strong needs something <em>outside</em> it — a recapitalisation, a buyer of last resort — to stop.";
     } else if(s.edge){
-      cap = "The firm sits <b>exactly at w*</b>: capacity (1+λ)w equals I* to the euro. Nudge <b>w</b> one notch down and ∂I/∂w jumps from 0 to <b>"+f2(1+s.lam)+"</b>. "+
+      cap = "The firm sits <b>exactly at w*</b>: capacity (1+λ)w equals I* to the euro. Nudge <b>w</b> one notch down and each extra euro of net worth suddenly carries <b>"+f2(1+s.lam)+"</b> euro of investment instead of none. "+
             "Nothing smooth happens in between — and that discontinuity is the whole Kaplan–Zingales problem.";
     } else if(s.bind){
       cap = "Constrained: the firm is on the ray, so a euro of net worth carries <b>"+f2(1+s.lam)+"</b> euro of investment with it. "+
             (s.sh>0 && s.dI>0 ? "The Δw = "+s.sh+" shock costs <b>"+f1(s.dI)+"</b> of investment"+(s.phi>0?", and <b>"+f1(s.total)+"</b> once the price of collateral feeds back.":".") : "");
     } else {
       cap = "Unconstrained: capacity (1+λ)w = <b>"+f1((1+s.lam)*s.w)+"</b> exceeds I* = "+s.istar+", so the firm invests the first best and "+
-            "<b>∂I/∂w = 0</b> — the frictionless benchmark, restored. The friction has not gone away; this firm is simply rich enough that it does not bind.";
+            "an extra euro of net worth now buys <b>no</b> extra investment — the frictionless benchmark, restored. The friction has not gone away; this firm is simply rich enough that it does not bind.";
     }
     document.getElementById("cap").innerHTML=cap;
   }
