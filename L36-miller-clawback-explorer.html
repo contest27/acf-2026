@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week 36 · Miller's clawback — ACF Explorer</title>
+<title>Week 1 · Miller's clawback — ACF Explorer</title>
 <!--
   Advanced Corporate Finance (EBM232A05) — University of Groningen
-  Week 36 Explorer: Miller (1977) and the personal-tax clawback.
+  Week 1 Explorer: Miller (1977) and the personal-tax clawback.
   Self-contained: no external CSS/JS/fonts. Works from GitHub Pages, from a
   local file, or uploaded straight into Brightspace as a single .html topic.
   Companion to Slides/L36-frictions-mm-benchmark.tex (Figure A).
@@ -19,7 +19,7 @@
   Zero crossing at  td* = 1 - (1-tc)(1-te).
   Knife-edge: at td = te the expression collapses to exactly tc.
 
-  COMPARATIVE STATICS is the point of this Explorer. Note what makes Week 36
+  COMPARATIVE STATICS is the point of this Explorer. Note what makes Week 1
   unusual: almost nothing in this formula is directly observable, so most
   movements have no empirical estimate at all. That is the week's
   deepest lesson -- the friction students are surest about is the one that
@@ -40,7 +40,7 @@
   body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);
        font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
        font-size:16px;line-height:1.5;}
-  .wrap{max-width:1200px;margin:0 auto}
+  .wrap{max-width:1320px;margin:0 auto}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   header{border-bottom:2px solid var(--rugred);padding-bottom:10px;margin-bottom:18px}
   .kicker{color:var(--rugred);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
@@ -48,7 +48,7 @@
   .sub{color:var(--muted);font-size:14px}
   .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
         border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+  .grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start}
   .figcol{align-self:stretch;min-width:0}
   .figstick{position:sticky;top:12px}
   .figcol figure{margin:0}
@@ -57,7 +57,7 @@
   .ctrlcol fieldset{padding:12px 14px 4px}
   .lead{max-width:80ch}
   .qs{max-width:90ch}
-  @media (max-width:820px){
+  @media (max-width:1100px){
     .grid{grid-template-columns:1fr}
     .figcol{order:-1}
     .figstick{position:static}
@@ -122,7 +122,7 @@
 <div class="wrap">
 
 <header>
-  <div class="kicker">Advanced Corporate Finance · Week 36</div>
+  <div class="kicker">Advanced Corporate Finance · Week 1</div>
   <h1>Miller's clawback</h1>
   <div class="sub">The friction you were surest about — and how it changes sign.</div>
 </header>
@@ -345,13 +345,13 @@
     g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+'" stroke="var(--line)" stroke-width="1.5"/>');
     // axes
     g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.5"/>');
-    g.push('<text x="'+L+'" y="'+(T-9)+'" fill="var(--muted)" font-size="12">net gain from leverage G_L/D</text>');
-    g.push('<text x="'+(W-R)+'" y="'+(H-B+36)+'" text-anchor="end" fill="var(--muted)" font-size="12">personal tax on interest τd</text>');
+    g.push('<text x="'+L+'" y="'+(T-9)+'" fill="var(--muted)" font-size="14">net gain from leverage G_L/D</text>');
+    g.push('<text x="'+(W-R)+'" y="'+(H-B+36)+'" text-anchor="end" fill="var(--muted)" font-size="14">personal tax on interest τd</text>');
 
     // the bachelor's benchmark: flat at tau_c
     g.push('<line x1="'+L+'" y1="'+Y(s.tc)+'" x2="'+(W-R)+'" y2="'+Y(s.tc)+
            '" stroke="var(--rugblue)" stroke-width="2"/>');
-    g.push('<text x="'+(W-R+8)+'" y="'+(Y(s.tc)+4)+'" fill="var(--rugblue)" font-size="12.5">bachelor: flat τc</text>');
+    g.push('<text x="'+(W-R+8)+'" y="'+(Y(s.tc)+4)+'" fill="var(--rugblue)" font-size="15">bachelor: flat τc</text>');
 
     // shaded negative region under the curve
     var seg=[], inNeg=false, d="", i, t, y;
@@ -370,23 +370,23 @@
     // ticks
     [0,0.1,0.2,0.3,0.4,0.5,0.6].forEach(function(t){
       g.push('<line x1="'+X(t)+'" y1="'+(H-B)+'" x2="'+X(t)+'" y2="'+(H-B+5)+'" stroke="var(--muted)" stroke-width="1"/>');
-      g.push('<text x="'+X(t)+'" y="'+(H-B+19)+'" text-anchor="middle" fill="var(--muted)" font-size="11.5">'+(t*100).toFixed(0)+'%</text>');
+      g.push('<text x="'+X(t)+'" y="'+(H-B+19)+'" text-anchor="middle" fill="var(--muted)" font-size="14">'+(t*100).toFixed(0)+'%</text>');
     });
 
     // knife edge: the curve touches the benchmark exactly at td = te
     if(s.te<=xmax){
       g.push('<circle cx="'+X(s.te)+'" cy="'+Y(s.tc)+'" r="4.5" fill="none" stroke="var(--rugblue)" stroke-width="1.6"/>');
-      g.push('<text x="'+X(s.te)+'" y="'+(Y(s.tc)-11)+'" text-anchor="middle" fill="var(--rugblue)" font-size="11.5">τd = τe</text>');
+      g.push('<text x="'+X(s.te)+'" y="'+(Y(s.tc)-11)+'" text-anchor="middle" fill="var(--rugblue)" font-size="14">τd = τe</text>');
     }
     // the zero crossing
     if(s.star>0 && s.star<xmax){
       g.push('<line x1="'+X(s.star)+'" y1="'+Y(0)+'" x2="'+X(s.star)+'" y2="'+(H-B)+
              '" stroke="var(--rugred)" stroke-width="1" stroke-dasharray="4 3" opacity="0.65"/>');
-      g.push('<text x="'+(X(s.star)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="12">τd* = '+(s.star*100).toFixed(1)+'%</text>');
+      g.push('<text x="'+(X(s.star)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="14">τd* = '+(s.star*100).toFixed(1)+'%</text>');
     }
     // current point
     g.push('<circle cx="'+X(s.td)+'" cy="'+Y(s.g)+'" r="6" fill="var(--rugred)"/>');
-    g.push('<text x="'+X(s.td)+'" y="'+(Y(s.g)+(s.g>=0?-14:22))+'" text-anchor="middle" fill="var(--rugred)" font-size="12.5" font-weight="600">'+pc(s.g)+'</text>');
+    g.push('<text x="'+X(s.td)+'" y="'+(Y(s.g)+(s.g>=0?-14:22))+'" text-anchor="middle" fill="var(--rugred)" font-size="15" font-weight="600">'+pc(s.g)+'</text>');
 
     plot.innerHTML='<title id="plotTitle">The net gain from leverage against the personal tax rate on interest</title>'+
       '<desc id="plotDesc">A flat blue benchmark at the corporate rate and a falling red curve that crosses zero at tau-d-star.</desc>'+g.join("");

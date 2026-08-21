@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week 39 · The manager wedge — ACF Explorer</title>
+<title>Week 4 · The manager wedge — ACF Explorer</title>
 <!--
   Advanced Corporate Finance (EBM232A05) — University of Groningen
-  Week 39 Explorer: the manager wedge, and what convex pay does to it.
+  Week 4 Explorer: the manager wedge, and what convex pay does to it.
   Self-contained: no external CSS/JS/fonts. Works from GitHub Pages, from a
   local file, or uploaded straight into Brightspace as a single .html topic.
   Companion to Slides/L39-incentives-compensation.tex (both figures).
@@ -39,7 +39,7 @@
   body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);
        font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
        font-size:16px;line-height:1.5;}
-  .wrap{max-width:1200px;margin:0 auto}
+  .wrap{max-width:1320px;margin:0 auto}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   header{border-bottom:2px solid var(--rugred);padding-bottom:10px;margin-bottom:18px}
   .kicker{color:var(--rugred);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
@@ -47,7 +47,7 @@
   .sub{color:var(--muted);font-size:14px}
   .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
         border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+  .grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start}
   .figcol{align-self:stretch;min-width:0}
   .figstick{position:sticky;top:12px}
   .figcol figure{margin:0}
@@ -56,7 +56,7 @@
   .ctrlcol fieldset{padding:12px 14px 4px}
   .lead{max-width:80ch}
   .qs{max-width:90ch}
-  @media (max-width:820px){
+  @media (max-width:1100px){
     .grid{grid-template-columns:1fr}
     .figcol{order:-1}
     .figstick{position:static}
@@ -124,7 +124,7 @@
 <div class="wrap">
 
 <header>
-  <div class="kicker">Advanced Corporate Finance · Week 39</div>
+  <div class="kicker">Advanced Corporate Finance · Week 4</div>
   <h1>The manager wedge</h1>
   <div class="sub">Why more equity can make a manager <em>more</em> cautious — and what convex pay does about it.</div>
 </header>
@@ -196,7 +196,7 @@
   <div class="figcol">
   <div class="figstick">
 <figure>
-  <svg id="plot" viewBox="0 0 940 320" role="img" aria-labelledby="plotTitle plotDesc">
+  <svg id="plot" viewBox="0 0 940 334" role="img" aria-labelledby="plotTitle plotDesc">
     <title id="plotTitle">The manager's certainty equivalent against his stake</title>
     <desc id="plotDesc">A concave curve: the linear gain from his share of the NPV, net of a quadratic risk cost.</desc>
   </svg>
@@ -384,7 +384,7 @@
   }
 
   function draw(s){
-    var W=940,H=320,L=68,R=210,T=24,B=54;
+    var W=940,H=334,L=68,R=210,T=24,B=54;
     var bmaxAxis=0.5;
     // vertical range from the curve over [0, 0.5]
     var lo=0, hi=0, i, bb, y;
@@ -402,11 +402,11 @@
     // payoff axis. Their verdict lives in the chip instead.
     g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+
            '" stroke="var(--rugblue)" stroke-width="2"/>');
-    g.push('<text x="'+(W-R+8)+'" y="'+(Y(0)+4)+'" fill="var(--rugblue)" font-size="12.5">he takes it iff CE ≥ 0</text>');
+    g.push('<text x="'+(W-R+8)+'" y="'+(Y(0)+4)+'" fill="var(--rugblue)" font-size="15">he takes it iff CE ≥ 0</text>');
     // axes
     g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.5"/>');
-    g.push('<text x="'+L+'" y="'+(T-8)+'" fill="var(--muted)" font-size="12">his certainty equivalent CE(β)</text>');
-    g.push('<text x="'+(W-R)+'" y="'+(H-B+34)+'" text-anchor="end" fill="var(--muted)" font-size="12">his stake β</text>');
+    g.push('<text x="'+L+'" y="'+(T-8)+'" fill="var(--muted)" font-size="14">his certainty equivalent CE(β)</text>');
+    g.push('<text x="'+(W-R)+'" y="'+(H-B+44)+'" text-anchor="end" fill="var(--muted)" font-size="14">his stake β</text>');
 
     // shaded refusal region (CE < 0) under the curve
     var seg=[], inNeg=false, d="";
@@ -427,7 +427,7 @@
     // ticks on beta
     [0,0.1,0.2,0.3,0.4,0.5].forEach(function(t){
       g.push('<line x1="'+X(t)+'" y1="'+(H-B)+'" x2="'+X(t)+'" y2="'+(H-B+5)+'" stroke="var(--muted)" stroke-width="1"/>');
-      g.push('<text x="'+X(t)+'" y="'+(H-B+19)+'" text-anchor="middle" fill="var(--muted)" font-size="11.5">'+t.toFixed(1)+'</text>');
+      g.push('<text x="'+X(t)+'" y="'+(H-B+19)+'" text-anchor="middle" fill="var(--muted)" font-size="14">'+t.toFixed(1)+'</text>');
     });
 
     // the current stake
@@ -435,13 +435,13 @@
     g.push('<line x1="'+X(s.b)+'" y1="'+Y(Math.min(0,cy))+'" x2="'+X(s.b)+'" y2="'+Y(Math.max(0,cy))+
            '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>');
     g.push('<circle cx="'+X(s.b)+'" cy="'+Y(cy)+'" r="6" fill="var(--rugred)"/>');
-    g.push('<text x="'+X(s.b)+'" y="'+(Y(cy)+(cy>=0?-14:22))+'" text-anchor="middle" fill="var(--rugred)" font-size="12.5" font-weight="600">β = '+s.b.toFixed(2)+'</text>');
+    g.push('<text x="'+X(s.b)+'" y="'+(Y(cy)+(cy>=0?-14:22))+'" text-anchor="middle" fill="var(--rugred)" font-size="15" font-weight="600">β = '+s.b.toFixed(2)+'</text>');
 
     // the tolerance threshold
     if(isFinite(s.bmax) && s.bmax>0 && s.bmax<bmaxAxis){
       g.push('<line x1="'+X(s.bmax)+'" y1="'+Y(0)+'" x2="'+X(s.bmax)+'" y2="'+(H-B)+
              '" stroke="var(--rugred)" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>');
-      g.push('<text x="'+(X(s.bmax)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="12">he stops here</text>');
+      g.push('<text x="'+(X(s.bmax)+6)+'" y="'+(H-B-8)+'" fill="var(--rugred)" font-size="14">he stops here</text>');
     }
     plot.innerHTML='<title id="plotTitle">The manager\'s certainty equivalent against his stake</title>'+
       '<desc id="plotDesc">A concave curve of CE against beta; the shaded region below the blue line at CE equals zero is where he refuses the project. When G is at least zero the shareholders want it, and that refusal is the wedge.</desc>'+g.join("");

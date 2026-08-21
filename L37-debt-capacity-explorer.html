@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week 37 · Debt capacity as a real option — ACF Explorer</title>
+<title>Week 2 · Debt capacity as a real option — ACF Explorer</title>
 <!--
   Advanced Corporate Finance (EBM232A05) — University of Groningen
-  Week 37 Explorer: debt capacity as a real option.
+  Week 2 Explorer: debt capacity as a real option.
   Self-contained: no external CSS/JS/fonts. Works from GitHub Pages, from a
   local file, or uploaded straight into Brightspace as a single .html topic.
   Companion to Slides/L37-capital-structure-dynamics.tex (Figure 1).
@@ -27,7 +27,7 @@
   body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);
        font-family:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
        font-size:16px;line-height:1.5;}
-  .wrap{max-width:1200px;margin:0 auto}
+  .wrap{max-width:1320px;margin:0 auto}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   header{border-bottom:2px solid var(--rugred);padding-bottom:10px;margin-bottom:18px}
   .kicker{color:var(--rugred);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
@@ -35,7 +35,7 @@
   .sub{color:var(--muted);font-size:14px}
   .lead{background:var(--panel);border-left:3px solid var(--rugred);padding:11px 14px;
         border-radius:0 6px 6px 0;font-size:14.5px;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+  .grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start}
   .figcol{align-self:stretch;min-width:0}
   .figstick{position:sticky;top:12px}
   .figcol figure{margin:0}
@@ -44,7 +44,7 @@
   .ctrlcol fieldset{padding:12px 14px 4px}
   .lead{max-width:80ch}
   .qs{max-width:90ch}
-  @media (max-width:760px){
+  @media (max-width:1100px){
     .grid{grid-template-columns:1fr}
     .figcol{order:-1}
     .figstick{position:static}
@@ -93,7 +93,7 @@
 <div class="wrap">
 
 <header>
-  <div class="kicker">Advanced Corporate Finance · Week 37</div>
+  <div class="kicker">Advanced Corporate Finance · Week 2</div>
   <h1>Debt capacity as a real option</h1>
   <div class="sub">Why a firm rationally borrows <em>less</em> than it can — explore the mechanism.</div>
 </header>
@@ -158,7 +158,7 @@
   <div class="figcol">
   <div class="figstick">
 <figure>
-  <svg id="plot" viewBox="0 0 760 300" role="img" aria-labelledby="plotTitle plotDesc">
+  <svg id="plot" viewBox="0 0 760 312" role="img" aria-labelledby="plotTitle plotDesc">
     <title id="plotTitle">Firm value as a function of today's debt</title>
     <desc id="plotDesc">Value rises with the tax shield, then drops by the option value pG once capacity for tomorrow's investment is used up.</desc>
   </svg>
@@ -254,7 +254,7 @@
   }
 
   function draw(s){
-    var W=760,H=300,L=64,R=26,T=22,B=52;
+    var W=760,H=312,L=64,R=26,T=22,B=52;
     var xmax=s.dbar*1.08;
     var vals = s.feasible ? [s.tau*(s.dbar-s.I)+s.option, s.tau*s.dbar, s.option, 1]
                           : [s.tau*s.dbar, 1];   // the option is never drawn, so it must not set the scale
@@ -265,8 +265,8 @@
 
     g.push('<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+Y(0)+'" stroke="var(--line)" stroke-width="1.5"/>');
     g.push('<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+'" stroke="var(--line)" stroke-width="1.5"/>');
-    g.push('<text x="'+L+'" y="'+(T-7)+'" fill="var(--muted)" font-size="12">firm value V(D₀)</text>');
-    g.push('<text x="'+(W-R)+'" y="'+(Y(0)+34)+'" text-anchor="end" fill="var(--muted)" font-size="12">debt today D₀</text>');
+    g.push('<text x="'+L+'" y="'+(T-7)+'" fill="var(--muted)" font-size="14">firm value V(D₀)</text>');
+    g.push('<text x="'+(W-R)+'" y="'+(Y(0)+42)+'" text-anchor="end" fill="var(--muted)" font-size="14">debt today D₀</text>');
 
     if(s.feasible){
       // preserve branch: 0 .. D̄-I  (shield + option)
@@ -288,22 +288,22 @@
     // ticks
     (s.feasible ? [[cut,"D̄ − I"],[s.dbar,"D̄"]] : [[s.dbar,"D̄"]]).forEach(function(t){
       g.push('<line x1="'+X(t[0])+'" y1="'+Y(0)+'" x2="'+X(t[0])+'" y2="'+(Y(0)+5)+'" stroke="var(--muted)" stroke-width="1"/>');
-      g.push('<text x="'+X(t[0])+'" y="'+(Y(0)+19)+'" text-anchor="middle" fill="var(--muted)" font-size="12">'+t[1]+'</text>');
+      g.push('<text x="'+X(t[0])+'" y="'+(Y(0)+19)+'" text-anchor="middle" fill="var(--muted)" font-size="14">'+t[1]+'</text>');
     });
 
     // pG annotation on the cliff
     if(s.feasible){
       var my=(Y(s.tau*cut+s.option)+Y(s.tau*cut))/2;
-      g.push('<text x="'+(X(cut)+9)+'" y="'+my+'" fill="var(--rugred)" font-size="13" dominant-baseline="middle">pG = '+n1(s.option)+'</text>');
+      g.push('<text x="'+(X(cut)+9)+'" y="'+my+'" fill="var(--rugred)" font-size="15.5" dominant-baseline="middle">pG = '+n1(s.option)+'</text>');
     } else {
-      g.push('<text x="'+X(s.dbar*0.5)+'" y="'+(T+16)+'" text-anchor="middle" fill="var(--muted)" font-size="12.5">no D₀ leaves I of room — the option never enters</text>');
+      g.push('<text x="'+X(s.dbar*0.5)+'" y="'+(T+16)+'" text-anchor="middle" fill="var(--muted)" font-size="15">no D₀ leaves I of room — the option never enters</text>');
     }
 
     // optimum marker
     var ox=s.preserve?cut:s.dbar, oy=s.preserve?(s.tau*cut+s.option):(s.tau*s.dbar);
     g.push('<circle cx="'+X(ox)+'" cy="'+Y(oy)+'" r="6" fill="'+(s.preserve?"var(--rugblue)":"var(--ruggrey)")+'"/>');
     g.push('<text x="'+X(ox)+'" y="'+(Y(oy)-14)+'" text-anchor="middle" fill="'+(s.preserve?"var(--rugblue)":"var(--ruggrey)")+
-           '" font-size="12.5" font-weight="600">optimum</text>');
+           '" font-size="15" font-weight="600">optimum</text>');
 
     plot.innerHTML='<title id="plotTitle">Firm value as a function of today\'s debt</title>'+
       '<desc id="plotDesc">Value rises with the tax shield at slope tau, then drops by pG at D-bar minus I once capacity is used up.</desc>'+g.join("");
